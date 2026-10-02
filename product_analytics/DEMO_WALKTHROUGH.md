@@ -59,9 +59,11 @@ Il laboratorio affronta esplicitamente due requisiti fondamentali di produzione:
 
 Se hai già eseguito `./init_hackathon_student.sh` durante il Lab I nello stesso progetto Qwiklabs, **il tuo ambiente e i dati base del Lab II sono già pronti** e puoi saltare direttamente allo **Step 1**.
 
-Se invece parti da un progetto Qwiklabs completamente vuoto, apri **Google Cloud Shell** ed esegui dalla root del repository:
+Se invece parti da un progetto Qwiklabs completamente vuoto, apri **Google Cloud Shell**, clona il repository ed esegui lo script di bootstrap:
 
 ```bash
+git clone https://github.com/malagoli/applied-ai-2026-10.git
+cd applied-ai-2026-10
 chmod +x init_hackathon_student.sh
 ./init_hackathon_student.sh
 ```

@@ -30,9 +30,11 @@ Il dataset sintetico contiene **~5.000 clienti**, **50.000 ordini**, **~4.400 re
 Apri **Google Cloud Shell** nel tuo ambiente Qwiklabs vuoto.
 
 ### Opzione A (Consigliata): Setup Automatico con Script di Bootstrap
-Dalla root del repository, esegui lo script di inizializzazione automatica (abilita le API, crea la Cloud Resource Connection `eu.vertex_ai_conn`, assegna i permessi IAM al Service Account e carica le tabelle base):
+Clona il repository ed esegui lo script di inizializzazione automatica (abilita le API, crea la Cloud Resource Connection `eu.vertex_ai_conn`, assegna i permessi IAM al Service Account e carica le tabelle base):
 
 ```bash
+git clone https://github.com/malagoli/applied-ai-2026-10.git
+cd applied-ai-2026-10
 chmod +x init_hackathon_student.sh
 ./init_hackathon_student.sh
 ```

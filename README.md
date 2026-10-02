@@ -55,23 +55,32 @@ NovaHome produce piccoli elettrodomestici. I clienti lasciano migliaia di recens
 
 ---
 
-## 🧪 Provisioning, Validazione & Pulizia Ambiente (Qwiklabs / Empty GCP Project)
+## 🧪 Checkout, Provisioning, Validazione & Pulizia Ambiente (Qwiklabs / Empty GCP Project)
 
-Il repository include script end-to-end 100% project-agnostic pensati per partire da un **ambiente Qwiklabs / GCP completamente vuoto**:
+Il repository include script end-to-end 100% project-agnostic pensati per partire da un **ambiente Qwiklabs / GCP completamente vuoto** direttamente da **Google Cloud Shell**:
 
-* 📋 **[Piano di Test Completo](TEST_PLAN_WORKSHOP.md)**
-* 🚀 **Setup Iniziale Ambiente Studente (Abilita API, Connection `eu.vertex_ai_conn`, IAM e Tabelle Base):**
+* 📥 **1. Checkout del Repository in Cloud Shell:**
   ```bash
+  git clone https://github.com/malagoli/applied-ai-2026-10.git
+  cd applied-ai-2026-10
+  ```
+* 🚀 **2. Setup Iniziale Ambiente Studente (Abilita API, Connection `eu.vertex_ai_conn`, IAM e Tabelle Base):**
+  ```bash
+  chmod +x init_hackathon_student.sh
   ./init_hackathon_student.sh
   ```
-* ⚡ **Build Completa + Esecuzione Automatica dei Test End-to-End:**
+* ⚡ **3. Build Completa + Esecuzione Automatica dei Test End-to-End:**
   *(Se vuoi materializzare in automatico tutte le tabelle intermedie di Lab I e Lab II ed eseguire subito la suite di test)*
   ```bash
+  chmod +x init_hackathon_student.sh test_workshop.sh
   ./init_hackathon_student.sh --full
   ./test_workshop.sh
   ```
-* 🧹 **Pulizia Completa delle Risorse Create (Cleanup):**
+* 🧹 **4. Pulizia Completa delle Risorse Create (Cleanup):**
   ```bash
+  chmod +x cleanup_hackathon.sh
   ./cleanup_hackathon.sh -y
   ```
+* 📋 **[Piano di Test Completo](TEST_PLAN_WORKSHOP.md)**
+
 
