@@ -78,10 +78,12 @@ if [[ "${MODE}" == "--bootstrap" || "${MODE}" == "--full" ]]; then
   echo "   ⏳ Waiting 15s for IAM propagation..."
   sleep 15
 
-  echo "▶ [4/5] Creating Lab I (retail_fraud) schema and seed tables..."
+  echo "▶ [4/5] Creating Lab I (retail_fraud) schema, seed tables, property graph & suspicious_rings..."
   bq query --project_id="${ACTIVE_PROJECT}" --location="${LOCATION}" --use_legacy_sql=false --quiet < retail_fraud/sql/01_customers_products.sql
   bq query --project_id="${ACTIVE_PROJECT}" --location="${LOCATION}" --use_legacy_sql=false --quiet < retail_fraud/sql/02_orders_returns_loyalty.sql
-  echo "   ✅ Lab I base schema & seed data loaded."
+  bq query --project_id="${ACTIVE_PROJECT}" --location="${LOCATION}" --use_legacy_sql=false --quiet < retail_fraud/sql/03_property_graph.sql
+  bq query --project_id="${ACTIVE_PROJECT}" --location="${LOCATION}" --use_legacy_sql=false --quiet < retail_fraud/sql/04_ring_detection.sql
+  echo "   ✅ Lab I base schema, seed data, property graph & suspicious_rings loaded."
 
   echo "▶ [5/5] Creating Lab II (mfg_quality_demo) schema and seed tables..."
   bq query --project_id="${ACTIVE_PROJECT}" --location="${LOCATION}" --use_legacy_sql=false --quiet < product_analytics/sql/01_setup_dataset_and_data.sql
