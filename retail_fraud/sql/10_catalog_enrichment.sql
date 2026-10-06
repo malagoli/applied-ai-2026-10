@@ -11,7 +11,7 @@ SELECT
       'Output ONLY the final description text, with no options, preamble or markdown. ',
       'Product name: ', product_name, '. Category: ', category,
       '. Legacy description: "', description, '"'),
-    connection_id => 'eu.vertex_ai_conn',
+    connection_id => 'us.vertex_ai_conn',
     endpoint => 'gemini-3.8-flash').result AS enriched_description
 FROM (
   SELECT * FROM `retail_fraud.products`

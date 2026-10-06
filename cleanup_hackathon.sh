@@ -36,7 +36,7 @@ if [[ -z "${PROJECT_ID}" || "${PROJECT_ID}" == "(unset)" ]]; then
   exit 1
 fi
 
-LOCATION="EU"
+LOCATION="US"
 CONN_ID="vertex_ai_conn"
 EVIDENCE_BUCKET="gs://${PROJECT_ID}-fraud-evidence"
 

@@ -19,7 +19,7 @@
 --   7g. AI.EVALUATE         — (TimesFM 3.0) Backtesting zero-shot sui difetti giornalieri.
 --
 -- Eseguire con:
--- bq query --location=EU --use_legacy_sql=false < sql/07_key_drivers_and_ai_agg_enhancements.sql
+-- bq query --location=US --use_legacy_sql=false < sql/07_key_drivers_and_ai_agg_enhancements.sql
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------
@@ -71,7 +71,7 @@ SELECT
   AI.AGG(
     STRUCT(CAST(r.rating AS STRING) AS star_rating, r.review_text AS customer_verbatim, i.affected_component AS ai_suspected_part),
     'Sei il Responsabile Qualità di NovaHome Appliances. Riassumi in italiano (max 2 frasi) il sintomo tecnico principale lamentato dai clienti su questo prodotto e indica il componente fisico da ispezionare.',
-    connection_id => 'eu.vertex_ai_conn',
+    connection_id => 'us.vertex_ai_conn',
     endpoint => 'gemini-3.8-flash'
   ) AS rd_technical_digest_it
 FROM `mfg_quality_demo.review_insights` i
@@ -113,7 +113,7 @@ JOIN sample_reviews r
   ON AI.IF(
     ('Does this customer review describe the exact technical failure symptom in the engineering bulletin? Review: ',
      r.review_text, ' | Engineering Bulletin: ', b.bulletin_symptom),
-    connection_id => 'eu.vertex_ai_conn'
+    connection_id => 'us.vertex_ai_conn'
   )
 ORDER BY b.bulletin_id, r.review_id;
 
@@ -133,7 +133,7 @@ SELECT
     AI.SIMILARITY(
       content1 => 'Kettle stopped heating water after two weeks, switch clicks off and water stays cold or lukewarm.',
       content2 => r.review_text,
-      connection_id => 'eu.vertex_ai_conn',
+      connection_id => 'us.vertex_ai_conn',
       endpoint => 'text-embedding-005'
     ),
     3

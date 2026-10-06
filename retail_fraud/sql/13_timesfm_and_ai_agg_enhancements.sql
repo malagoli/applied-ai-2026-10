@@ -7,7 +7,7 @@
 -- gestite di BigQuery (AI.AGG, AI.SCORE, AI.SIMILARITY) nel caso d'uso Retail.
 --
 -- Eseguire con:
--- bq query --location=EU --use_legacy_sql=false < sql/13_timesfm_and_ai_agg_enhancements.sql
+-- bq query --location=US --use_legacy_sql=false < sql/13_timesfm_and_ai_agg_enhancements.sql
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------
@@ -186,7 +186,7 @@ SELECT
   AI.AGG(
     STRUCT(r.return_reason_text AS customer_claim, r.agent_notes AS support_agent_observation),
     'Agisci come Senior Fraud Investigator. Sintetizza in 2 frasi in italiano il Modus Operandi comune emergente da questi resi e indica 1 azione immediata di mitigazione.',
-    connection_id => 'eu.vertex_ai_conn',
+    connection_id => 'us.vertex_ai_conn',
     endpoint => 'gemini-3.8-flash'
   ) AS ai_agg_modus_operandi_it
 FROM `retail_fraud.suspicious_rings` sr,
@@ -218,7 +218,7 @@ SELECT
     AI.SCORE(
       ('Rate the severity of chargeback threat, legal intimidation, refusal of store credit, or scripted abuse in this return interaction: ',
        return_reason_text, ' | Agent notes: ', agent_notes),
-      connection_id => 'eu.vertex_ai_conn'
+      connection_id => 'us.vertex_ai_conn'
     ),
     2
   ) AS escalation_risk_score
@@ -247,7 +247,7 @@ SELECT
     AI.SIMILARITY(
       content1 => return_reason_text,
       content2 => 'Package never arrived despite carrier tracking showing delivered. Demanding immediate refund to credit card or opening a chargeback.',
-      connection_id => 'eu.vertex_ai_conn',
+      connection_id => 'us.vertex_ai_conn',
       endpoint => 'text-embedding-005'
     ),
     3

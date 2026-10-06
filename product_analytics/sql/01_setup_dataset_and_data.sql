@@ -2,12 +2,12 @@
 -- NovaHome Appliances — Product Review Intelligence demo
 -- Step 1: dataset, tables and sample data
 --
--- Run with:  bq query --use_legacy_sql=false --location=EU < sql/01_setup_dataset_and_data.sql
+-- Run with:  bq query --use_legacy_sql=false --location=US < sql/01_setup_dataset_and_data.sql
 -- =============================================================================
 
 CREATE SCHEMA IF NOT EXISTS `mfg_quality_demo`
   OPTIONS (
-    location = 'EU',
+    location = 'US',
     description = 'Demo: analyze unstructured product reviews with BigQuery generative AI and trace defects back to production machines and component lots'
   );
 

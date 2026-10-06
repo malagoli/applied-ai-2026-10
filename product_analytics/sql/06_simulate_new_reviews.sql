@@ -4,7 +4,7 @@
 -- can trigger the pipeline immediately with:
 --   CALL `mfg_quality_demo.enrich_new_reviews`();
 --
--- Run with:  bq query --use_legacy_sql=false --location=EU < sql/06_simulate_new_reviews.sql
+-- Run with:  bq query --use_legacy_sql=false --location=US < sql/06_simulate_new_reviews.sql
 -- =============================================================================
 
 INSERT INTO `mfg_quality_demo.product_reviews` VALUES

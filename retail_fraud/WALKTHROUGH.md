@@ -1,8 +1,8 @@
 # Walkthrough Passo-Passo (Lab I) — Retail Return-Fraud & Abuse Ring Detection
 
-**Ambiente Target:** Progetto Qwiklabs / GCP vuoto (Location: **EU**)  
+**Ambiente Target:** Progetto Qwiklabs / GCP vuoto (Location: **US**)  
 **Dataset BigQuery:** `retail_fraud`  
-**Connection Vertex AI:** `eu.vertex_ai_conn` (`gemini-3.8-flash` + `TimesFM 3.0`)
+**Connection Vertex AI:** `us.vertex_ai_conn` (`gemini-3.8-flash` + `TimesFM 3.0`)
 
 ---
 
@@ -30,7 +30,7 @@ Il dataset sintetico contiene **~5.000 clienti**, **50.000 ordini**, **~4.400 re
 Apri **Google Cloud Shell** nel tuo ambiente Qwiklabs vuoto.
 
 ### Opzione A (Consigliata): Setup Automatico con Script di Bootstrap
-Clona il repository ed esegui lo script di inizializzazione automatica (abilita le API, crea la Cloud Resource Connection `eu.vertex_ai_conn`, assegna i permessi IAM al Service Account e carica le tabelle base):
+Clona il repository ed esegui lo script di inizializzazione automatica (abilita le API, crea la Cloud Resource Connection `us.vertex_ai_conn`, assegna i permessi IAM al Service Account e carica le tabelle base):
 
 ```bash
 git clone https://github.com/malagoli/applied-ai-2026-10.git
@@ -51,15 +51,15 @@ gcloud services enable \
   bigqueryconnection.googleapis.com \
   aiplatform.googleapis.com
 
-# 2. Crea la Cloud Resource Connection per Vertex AI in EU (~5s)
+# 2. Crea la Cloud Resource Connection per Vertex AI in US (~5s)
 bq mk --connection \
-  --location=EU \
+  --location=US \
   --project_id="${PROJECT_ID}" \
   --connection_type=CLOUD_RESOURCE \
   vertex_ai_conn
 
 # 3. Assegna il ruolo Vertex AI User al Service Account della connessione (~15s)
-SA_EMAIL=$(bq show --format=json --connection "${PROJECT_ID}.EU.vertex_ai_conn" | python3 -c "import sys, json; print(json.load(sys.stdin)['cloudResource']['serviceAccountId'])")
+SA_EMAIL=$(bq show --format=json --connection "${PROJECT_ID}.US.vertex_ai_conn" | python3 -c "import sys, json; print(json.load(sys.stdin)['cloudResource']['serviceAccountId'])")
 gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
   --member="serviceAccount:${SA_EMAIL}" \
   --role="roles/aiplatform.user" \
@@ -68,7 +68,7 @@ sleep 15
 ```
 
 > **💡 Nota per l'uso da Console Web BigQuery (Qwiklabs Standard Edition):**
-> * Tutti gli script creano il dataset `retail_fraud` forzando esplicitamente `OPTIONS (location = 'EU')`. Se esegui query ad-hoc nella Console Web di BigQuery, assicurati che la processing location sia impostata su **`EU`** (o lascia che BigQuery la rilevi dal dataset `retail_fraud`).
+> * Tutti gli script creano il dataset `retail_fraud` forzando esplicitamente `OPTIONS (location = 'US')`. Se esegui query ad-hoc nella Console Web di BigQuery, assicurati che la processing location sia impostata su **`US`** (o lascia che BigQuery la rilevi dal dataset `retail_fraud`).
 > * L'operatore GQL `GRAPH_TABLE` richiede una reservation BigQuery Enterprise Edition; sugli ambienti Qwiklabs On-Demand (Standard Edition), gli script [`sql/04_ring_detection.sql`](sql/04_ring_detection.sql) e [`sql/05_graph_exploration_queries.sql`](sql/05_graph_exploration_queries.sql) includono già un blocco `BEGIN ... EXCEPTION WHEN ERROR` che effettua il **fallback automatico trasparente in puro SQL** producendo lo stesso identico risultato in ~2 secondi.
 
 ---
@@ -81,7 +81,7 @@ Entra nella cartella del **Lab I**:
 cd retail_fraud
 ```
 
-Puoi eseguire ogni passo sia da terminale Cloud Shell (`bq query --location=EU --use_legacy_sql=false < sql/...`) sia copiando il contenuto dei file `.sql` nell'editor di **BigQuery Studio**.
+Puoi eseguire ogni passo sia da terminale Cloud Shell (`bq query --location=US --use_legacy_sql=false < sql/...`) sia copiando il contenuto dei file `.sql` nell'editor di **BigQuery Studio**.
 
 ---
 
@@ -90,8 +90,8 @@ Puoi eseguire ogni passo sia da terminale Cloud Shell (`bq query --location=EU -
 Se non hai già usato `./init_hackathon_student.sh`, popola lo schema `retail_fraud` con i dati transazionali:
 
 ```bash
-bq query --location=EU --use_legacy_sql=false < sql/01_customers_products.sql
-bq query --location=EU --use_legacy_sql=false < sql/02_orders_returns_loyalty.sql
+bq query --location=US --use_legacy_sql=false < sql/01_customers_products.sql
+bq query --location=US --use_legacy_sql=false < sql/02_orders_returns_loyalty.sql
 ```
 
 Ispeziona ora la tabella dei resi in BigQuery:
@@ -113,7 +113,7 @@ LIMIT 20;
 Prima ancora di indagare sui singoli clienti, il team Finance o Antifrode nota un'anomalia macroscopica nei rimborsi settimanali usando il foundation model **TimesFM 3.0** (`model => 'TimesFM 3.0'`) di BigQuery (`AI.DETECT_ANOMALIES`, `AI.FORECAST` ed `AI.EVALUATE` — *zero-shot*, senza alcun `CREATE MODEL`):
 
 ```bash
-bq query --location=EU --use_legacy_sql=false < sql/13_timesfm_and_ai_agg_enhancements.sql
+bq query --location=US --use_legacy_sql=false < sql/13_timesfm_and_ai_agg_enhancements.sql
 ```
 
 Puoi eseguire direttamente in Console la query di **Anomaly Detection (13a)** con `TimesFM 3.0`:
@@ -152,13 +152,13 @@ ORDER BY week_start;
 Definiamo ora il grafo `retail_fraud.fraud_graph` sopra le tabelle relazionali (zero-copy, nessuna duplicazione di dati):
 
 ```bash
-bq query --location=EU --use_legacy_sql=false < sql/03_property_graph.sql
+bq query --location=US --use_legacy_sql=false < sql/03_property_graph.sql
 ```
 
 Ora esegui le query esplorative di grafo e di loyalty cycling contenute in [`sql/05_graph_exploration_queries.sql`](sql/05_graph_exploration_queries.sql):
 
 ```bash
-bq query --location=EU --use_legacy_sql=false < sql/05_graph_exploration_queries.sql
+bq query --location=US --use_legacy_sql=false < sql/05_graph_exploration_queries.sql
 ```
 
 * **Q1 (Condivisione Device):** mostra le coppie di account che usano lo stesso `device_id`. La maggior parte sono coppie familiari innocue, ma i device `999001` e `999002` collegano **6 account distinti** ciascuno (`9001–9006`).
@@ -189,7 +189,7 @@ ORDER BY points_cycled DESC;
 Una semplice condivisione di indirizzo o device non basta (due coniugi condividono indirizzo e carta). Lo script [`sql/04_ring_detection.sql`](sql/04_ring_detection.sql) combina la **topologia del grafo** ($\ge 3$ account intorno alla stessa entità) con il **filtro comportamentale** (tasso di reso $\ge 40\%$ e almeno 3 resi) per materializzare la tabella `retail_fraud.suspicious_rings`:
 
 ```bash
-bq query --location=EU --use_legacy_sql=false < sql/04_ring_detection.sql
+bq query --location=US --use_legacy_sql=false < sql/04_ring_detection.sql
 ```
 
 Ispeziona i ring rilevati:
@@ -217,8 +217,8 @@ ORDER BY 1;
 Crea il riferimento al modello remoto e lancia la stored procedure incrementale `retail_fraud.score_new_returns_batch()` (che usa `AI.GENERATE_BOOL` all'interno di un ciclo `REPEAT ... UNTIL` resiliente agli errori di quota HTTP 429):
 
 ```bash
-bq query --location=EU --use_legacy_sql=false < sql/06_remote_model.sql
-bq query --location=EU --use_legacy_sql=false < sql/07_async_scoring_batch.sql
+bq query --location=US --use_legacy_sql=false < sql/06_remote_model.sql
+bq query --location=US --use_legacy_sql=false < sql/07_async_scoring_batch.sql
 ```
 
 Verifica i risultati del primo batch (configurato a `LIMIT 20` per velocità in aula, dando priorità agli account sospetti):
@@ -239,7 +239,7 @@ ORDER BY 1, 2;
 Esegui [`sql/08_notes_extraction.sql`](sql/08_notes_extraction.sql), che campiona in una tabella temporanea `_sampled_returns` 10 note rappresentative dei membri dei ring e invoca `AI.GENERATE` con `output_schema` tipizzato:
 
 ```bash
-bq query --location=EU --use_legacy_sql=false < sql/08_notes_extraction.sql
+bq query --location=US --use_legacy_sql=false < sql/08_notes_extraction.sql
 ```
 
 Visualizza i campi strutturati estratti dal testo libero:
@@ -256,7 +256,7 @@ ORDER BY return_id;
 Esegui [`sql/09_case_summaries.sql`](sql/09_case_summaries.sql) per generare il dossier investigativo (`case_summary`) di ogni ring unendo le prove del grafo con le note testuali:
 
 ```bash
-bq query --location=EU --use_legacy_sql=false < sql/09_case_summaries.sql
+bq query --location=US --use_legacy_sql=false < sql/09_case_summaries.sql
 ```
 
 Puoi anche testare direttamente l'aggregazione semantica nativa **`AI.AGG`** (senza `STRING_AGG` manuale) dentro una clausola `GROUP BY ring_id`:
@@ -269,7 +269,7 @@ SELECT
   AI.AGG(
     STRUCT(r.return_reason_text AS customer_claim, r.agent_notes AS support_agent_observation),
     'Agisci come Senior Fraud Investigator. Sintetizza in 2 frasi in italiano il Modus Operandi comune emergente da questi resi e indica 1 azione immediata di mitigazione.',
-    connection_id => 'eu.vertex_ai_conn',
+    connection_id => 'us.vertex_ai_conn',
     endpoint => 'gemini-3.8-flash'
   ) AS ai_agg_modus_operandi_it
 FROM `retail_fraud.suspicious_rings` sr,
@@ -288,7 +288,7 @@ Nello script [`sql/13_timesfm_and_ai_agg_enhancements.sql`](sql/13_timesfm_and_a
           ROUND(AI.SCORE(
             ('Rate the severity of chargeback threat, legal intimidation, refusal of store credit, or scripted abuse in this return interaction: ',
              return_reason_text, ' | Agent notes: ', agent_notes),
-            connection_id => 'eu.vertex_ai_conn'
+            connection_id => 'us.vertex_ai_conn'
           ), 2) AS escalation_risk_score
    FROM (SELECT * FROM `retail_fraud.returns` WHERE customer_id >= 9000 LIMIT 10)
    ORDER BY escalation_risk_score DESC
@@ -303,7 +303,7 @@ Nello script [`sql/13_timesfm_and_ai_agg_enhancements.sql`](sql/13_timesfm_and_a
 Crea la vista finale `retail_fraud.fraud_dashboard` che unisce i ring del grafo, i conteggi dei resi flaggati dall'AI e il dossier investigativo:
 
 ```bash
-bq query --location=EU --use_legacy_sql=false < sql/11_fraud_dashboard.sql
+bq query --location=US --use_legacy_sql=false < sql/11_fraud_dashboard.sql
 ```
 
 Interroga la dashboard ordinata per esposizione finanziaria (€ a rischio):
@@ -321,13 +321,13 @@ In produzione una **Scheduled Query** invoca `CALL retail_fraud.score_new_return
 Simuliamo l'arrivo in tempo reale di **10 nuovi reclami sospetti** (`return_id >= 6000000`):
 
 ```bash
-bq query --location=EU --use_legacy_sql=false < sql/12_simulate_new_returns.sql
+bq query --location=US --use_legacy_sql=false < sql/12_simulate_new_returns.sql
 ```
 
 Ora attiva manualmente un ciclo della pipeline asincrona:
 
 ```bash
-bq query --location=EU --use_legacy_sql=false "CALL \`retail_fraud.score_new_returns_batch\`();"
+bq query --location=US --use_legacy_sql=false "CALL \`retail_fraud.score_new_returns_batch\`();"
 ```
 
 Verifica che i 10 nuovi resi siano stati immediatamente intercettati e classificati:
@@ -347,7 +347,7 @@ FROM `retail_fraud.returns_scored`;
 Le stesse funzioni `AI.GENERATE` possono risolvere problemi retail completamente diversi, come riscrivere descrizioni di catalogo legacy criptiche (`"home itm 3 gry s/m/l no tag imp.2024..."`) in testi e-commerce pronti per la pubblicazione:
 
 ```bash
-bq query --location=EU --use_legacy_sql=false < sql/10_catalog_enrichment.sql
+bq query --location=US --use_legacy_sql=false < sql/10_catalog_enrichment.sql
 ```
 
 Controlla il risultato:
@@ -366,7 +366,7 @@ LIMIT 10;
 Per completare l'indagine con le 6 nuove **Table-Valued Functions di Augmented Analytics** (`ML.DETECT_CHANGE_POINTS`, `ML.TREND`, `ML.SEASONALITY`, `AI.KEY_DRIVERS`, `AI.CAUSAL_EFFECT`, `ML.CORRELATION`), esegui:
 
 ```bash
-bq query --location=EU --use_legacy_sql=false < sql/14_augmented_analytics_bonus_pack.sql
+bq query --location=US --use_legacy_sql=false < sql/14_augmented_analytics_bonus_pack.sql
 ```
 
 👉 Consulta la guida dedicata **[AUGMENTED_ANALYTICS_BONUS_PACK.md](AUGMENTED_ANALYTICS_BONUS_PACK.md)** per i dettagli sul chaining tra le funzioni e l'interpretazione dell'impatto causale netto (+€75.489).
@@ -377,7 +377,7 @@ bq query --location=EU --use_legacy_sql=false < sql/14_augmented_analytics_bonus
 
 | File | Ordine Consigliato | Descrizione |
 |---|---|---|
-| [`sql/01_customers_products.sql`](sql/01_customers_products.sql) | Step 1a | Crea lo schema `retail_fraud` (`EU`), `customers` (5.015) e `products` (500). |
+| [`sql/01_customers_products.sql`](sql/01_customers_products.sql) | Step 1a | Crea lo schema `retail_fraud` (`US`), `customers` (5.015) e `products` (500). |
 | [`sql/02_orders_returns_loyalty.sql`](sql/02_orders_returns_loyalty.sql) | Step 1b | Popola `orders` (50k), `returns` (~4.400), `loyalty_*`, tabelle entità e `_ground_truth_rings`. |
 | [`sql/13_timesfm_and_ai_agg_enhancements.sql`](sql/13_timesfm_and_ai_agg_enhancements.sql) | Step 2 & 5c | **TimesFM 3.0** (`AI.DETECT_ANOMALIES`, `AI.FORECAST` multivariato `target_cols`, `AI.EVALUATE`) + **`AI.AGG`**, **`AI.SCORE`**, **`AI.SIMILARITY`**. |
 | [`sql/03_property_graph.sql`](sql/03_property_graph.sql) | Step 3a | `CREATE OR REPLACE PROPERTY GRAPH retail_fraud.fraud_graph`. |

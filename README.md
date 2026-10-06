@@ -2,7 +2,7 @@
 
 **Evento Ufficiale Google Cloud:** [Applied AI & Data Hackathon - Milano (13 Ottobre 2026)](https://cloud.google.com/events/intl/it-it/applied-ai-data-hackathon-trasforma-i-tuoi-dati-in-valore)  
 **Location:** Google Milan, Via Federico Confalonieri 4, Milano  
-**Ambiente Target:** Progetto Qwiklabs / Google Cloud (Location: EU)
+**Ambiente Target:** Progetto Qwiklabs / Google Cloud (Location: US)
 
 ---
 
@@ -64,7 +64,7 @@ Il repository include script end-to-end 100% project-agnostic pensati per partir
   git clone https://github.com/malagoli/applied-ai-2026-10.git
   cd applied-ai-2026-10
   ```
-* 🚀 **2. Setup Iniziale Ambiente Studente (Abilita API, Connection `eu.vertex_ai_conn`, IAM e Tabelle Base):**
+* 🚀 **2. Setup Iniziale Ambiente Studente (Abilita API, Connection `us.vertex_ai_conn`, IAM e Tabelle Base):**
   ```bash
   chmod +x init_hackathon_student.sh
   ./init_hackathon_student.sh

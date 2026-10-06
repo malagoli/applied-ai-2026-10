@@ -21,7 +21,7 @@
 --     own via the embeddings => argument;
 --   * Preview feature; AI.GENERATE_INT below has no optimized mode yet.
 --
--- Run with:  bq query --use_legacy_sql=false --location=EU < sql/02_quick_triage.sql
+-- Run with:  bq query --use_legacy_sql=false --location=US < sql/02_quick_triage.sql
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------
@@ -35,20 +35,20 @@ SELECT
   -- optimizable boolean predicate: distilled model answers most rows at scale
   AI.IF(
     ('Does this product review describe a malfunction or physical defect of the product itself (not shipping, packaging, price or personal preference)? Review: ', r.review_text),
-    connection_id     => 'eu.vertex_ai_conn',
+    connection_id     => 'us.vertex_ai_conn',
     optimization_mode => 'MINIMIZE_COST'
   ) AS is_defect_report,
   -- optimizable single-label classification
   AI.CLASSIFY(
     r.review_text,
     categories        => ['heating', 'motor', 'leak_seal', 'electronics', 'housing_cosmetic', 'none'],
-    connection_id     => 'eu.vertex_ai_conn',
+    connection_id     => 'us.vertex_ai_conn',
     optimization_mode => 'MINIMIZE_COST'
   ) AS defect_category,
   -- free-form numeric extraction: no optimized mode, always a direct LLM call
   AI.GENERATE_INT(
     ('Rate the severity of the problem described in this review from 1 (cosmetic/no problem) to 5 (safety hazard or total failure). Review: ', r.review_text),
-    connection_id => 'eu.vertex_ai_conn',
+    connection_id => 'us.vertex_ai_conn',
     endpoint      => 'gemini-3.8-flash'
   ).result AS severity
 FROM `mfg_quality_demo.product_reviews` AS r
@@ -69,7 +69,7 @@ SELECT
   ROUND(
     AI.SCORE(
       ('Urgency of physical safety hazard: electrical fire risk, burning smell, overheating, or water leaking near electrical outlet: ', r.review_text),
-      connection_id => 'eu.vertex_ai_conn'
+      connection_id => 'us.vertex_ai_conn'
     ),
     2
   ) AS safety_hazard_score

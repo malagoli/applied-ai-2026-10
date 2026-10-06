@@ -47,7 +47,7 @@ BEGIN
         b.customer_id,
         -- Note: For large-scale cost distillation (>3,000 rows), you can also use:
         -- AI.IF(('Is this return fraudulent? ', b.return_reason_text, b.agent_notes),
-        --       connection_id => 'eu.vertex_ai_conn', optimization_mode => 'MINIMIZE_COST')
+        --       connection_id => 'us.vertex_ai_conn', optimization_mode => 'MINIMIZE_COST')
         AI.GENERATE_BOOL(
           prompt => CONCAT(
             'You are a retail returns-abuse analyst. Based on the customer return reason ',
@@ -56,7 +56,7 @@ BEGIN
             'cycling, scripted or coordinated behavior). Answer true ONLY for clear abuse ',
             'signals; ordinary sizing, preference or damaged-in-transit returns are false. ',
             'Return reason: "', b.return_reason_text, '" | Agent notes: "', b.agent_notes, '"'),
-          connection_id => 'eu.vertex_ai_conn',
+          connection_id => 'us.vertex_ai_conn',
           endpoint => 'gemini-3.8-flash'
         ) AS ai
       FROM (

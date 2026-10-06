@@ -43,7 +43,7 @@ FROM (
         '- coordination_signal: true if notes mention repeated patterns, negative points balance, scripted calls, or shared accounts/addresses.\n\n',
         'Agent notes: ', r.agent_notes
       ),
-      connection_id => 'eu.vertex_ai_conn',
+      connection_id => 'us.vertex_ai_conn',
       endpoint      => 'gemini-3.8-flash',
       output_schema => 'claimed_issue STRING, product_condition STRING, refund_pressure STRING, coordination_signal BOOL'
     ) AS extracted

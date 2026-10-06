@@ -45,7 +45,7 @@ BigQuery unifica in un unico motore SQL serverless cinque paradigmi storicamente
 * **Descrizione Generale:** Valuta una condizione in linguaggio naturale su testo o dati multimodali restituendo un BOOL direttamente in WHERE, SELECT o nella clausola ON di un JOIN semantico. Con optimization_mode => 'MINIMIZE_COST', BigQuery distilla automaticamente un modello leggero riducendo costi e latenza su milioni di righe.
 * **Sintassi SQL di Riferimento:**
   ```sql
-  WHERE AI.IF(('Condition: ', col), connection_id => 'eu.vertex_ai_conn', optimization_mode => 'MINIMIZE_COST')  |  JOIN t2 ON AI.IF(...)
+  WHERE AI.IF(('Condition: ', col), connection_id => 'us.vertex_ai_conn', optimization_mode => 'MINIMIZE_COST')  |  JOIN t2 ON AI.IF(...)
   ```
 * **Utilizzo nel Workshop:** Lab II (02_quick_triage.sql & 07_key_drivers_and_ai_agg_enhancements.sql): filtro recensioni difettose e Semantic JOIN tra bollettini tecnici e reclami.
 
@@ -65,7 +65,7 @@ BigQuery unifica in un unico motore SQL serverless cinque paradigmi storicamente
 * **Descrizione Generale:** Assegna ogni record non strutturato a una categoria esatta scelta da un array predefinito, senza esempi di addestramento (zero-shot). Utilizzabile direttamente in SELECT e GROUP BY per costruire cubi OLAP su dati testuali liberi.
 * **Sintassi SQL di Riferimento:**
   ```sql
-  AI.CLASSIFY(text_col, categories => ['cat_A', 'cat_B', 'cat_C'], connection_id => 'eu.vertex_ai_conn', optimization_mode => 'MINIMIZE_COST')
+  AI.CLASSIFY(text_col, categories => ['cat_A', 'cat_B', 'cat_C'], connection_id => 'us.vertex_ai_conn', optimization_mode => 'MINIMIZE_COST')
   ```
 * **Utilizzo nel Workshop:** Lab II (02_quick_triage.sql): classificazione istantanea dei difetti in ['heating_failure', 'water_leak', 'electrical_fault', 'mechanical_wear', 'cosmetic'].
 
@@ -85,7 +85,7 @@ BigQuery unifica in un unico motore SQL serverless cinque paradigmi storicamente
 * **Descrizione Generale:** Assegna un punteggio numerico continuo (FLOAT64) a ogni riga in base a una rubrica qualitativa espressa in linguaggio naturale. Ideale in ORDER BY per ordinare code di lavoro, prioritizzare escalation e filtrare i casi a maggior rischio.
 * **Sintassi SQL di Riferimento:**
   ```sql
-  SELECT *, AI.SCORE(('Rate severity from 1 to 5: ', text_col), connection_id => 'eu.vertex_ai_conn') AS risk_score ORDER BY risk_score DESC
+  SELECT *, AI.SCORE(('Rate severity from 1 to 5: ', text_col), connection_id => 'us.vertex_ai_conn') AS risk_score ORDER BY risk_score DESC
   ```
 * **Utilizzo nel Workshop:** Lab I (13_timesfm_and_ai_agg_enhancements.sql) & Lab II (02_quick_triage.sql): ranking per minaccia chargeback (score 5.0) e rischio sicurezza elettrica/incendio.
 
@@ -105,7 +105,7 @@ BigQuery unifica in un unico motore SQL serverless cinque paradigmi storicamente
 * **Descrizione Generale:** Trasforma testo libero o oggetti multimodali in uno STRUCT tipizzato BigQuery conforme a output_schema (oppure genera report narrativi). Converte istantaneamente note, contratti e recensioni in colonne SQL interrogabili con JOIN e aggregazioni.
 * **Sintassi SQL di Riferimento:**
   ```sql
-  AI.GENERATE(prompt => ..., connection_id => 'eu.vertex_ai_conn', endpoint => 'gemini-3.8-flash', output_schema => 'field1 STRING, field2 BOOL')
+  AI.GENERATE(prompt => ..., connection_id => 'us.vertex_ai_conn', endpoint => 'gemini-3.8-flash', output_schema => 'field1 STRING, field2 BOOL')
   ```
 * **Utilizzo nel Workshop:** Lab I (08_notes_extraction.sql, 09_case_summaries.sql, 10_catalog_enrichment.sql) & Lab II (03_async_enrichment_pipeline.sql, 05_executive_summary.sql).
 
@@ -125,7 +125,7 @@ BigQuery unifica in un unico motore SQL serverless cinque paradigmi storicamente
 * **Descrizione Generale:** Famiglia di funzioni scalari (AI.GENERATE_BOOL, AI.GENERATE_INT, AI.GENERATE_DOUBLE) che restituiscono un singolo valore primitivo tipizzato più lo stato diagnostico (ai.result, ai.status). Ideali in Stored Procedure incrementali con retry automatico su errori 429.
 * **Sintassi SQL di Riferimento:**
   ```sql
-  AI.GENERATE_BOOL(prompt => CONCAT('Is this return abusive? ', notes), connection_id => 'eu.vertex_ai_conn', endpoint => 'gemini-3.8-flash')
+  AI.GENERATE_BOOL(prompt => CONCAT('Is this return abusive? ', notes), connection_id => 'us.vertex_ai_conn', endpoint => 'gemini-3.8-flash')
   ```
 * **Utilizzo nel Workshop:** Lab I (07_async_scoring_batch.sql & 12_simulate_new_returns.sql): scoring incrementale con ciclo REPEAT...UNTIL che intercetta 10/10 nuovi resi fraudolenti.
 
@@ -145,7 +145,7 @@ BigQuery unifica in un unico motore SQL serverless cinque paradigmi storicamente
 * **Descrizione Generale:** Funzione di aggregazione nativa SQL (come SUM o COUNT) che combina centinaia o migliaia di testi all'interno di ciascuna partizione GROUP BY sfruttando l'ampia finestra di contesto di Gemini, senza dover concatenare manualmente stringhe con STRING_AGG.
 * **Sintassi SQL di Riferimento:**
   ```sql
-  SELECT group_col, AI.AGG(STRUCT(col1, col2), 'Synthesize common pattern and 1 action', connection_id => 'eu.vertex_ai_conn') GROUP BY group_col
+  SELECT group_col, AI.AGG(STRUCT(col1, col2), 'Synthesize common pattern and 1 action', connection_id => 'us.vertex_ai_conn') GROUP BY group_col
   ```
 * **Utilizzo nel Workshop:** Lab I (13_timesfm_and_ai_agg_enhancements.sql) & Lab II (07_key_drivers_and_ai_agg_enhancements.sql): sintesi Modus Operandi per Fraud Ring e Quality Brief per SKU.
 
@@ -165,7 +165,7 @@ BigQuery unifica in un unico motore SQL serverless cinque paradigmi storicamente
 * **Descrizione Generale:** Genera al volo gli embedding vettoriali dei due testi tramite text-embedding-005 e restituisce la similarità coseno (-1.0 a 1.0) in una singola espressione SQL, senza dover creare tabelle di embedding o indici vettoriali dedicati.
 * **Sintassi SQL di Riferimento:**
   ```sql
-  AI.SIMILARITY(content1 => col_a, content2 => 'Reference text', connection_id => 'eu.vertex_ai_conn', endpoint => 'text-embedding-005')
+  AI.SIMILARITY(content1 => col_a, content2 => 'Reference text', connection_id => 'us.vertex_ai_conn', endpoint => 'text-embedding-005')
   ```
 * **Utilizzo nel Workshop:** Lab I (13_timesfm_and_ai_agg_enhancements.sql) & Lab II (07_key_drivers_and_ai_agg_enhancements.sql): caccia a script fraudolenti (0.840) e ricerca reclami gemelli (0.870).
 

@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # =============================================================================
 # Automated End-to-End Validation Suite for Applied AI & Data Hackathon Labs
-# Target Environment: Active GCP Project (Location: EU)
+# Target Environment: Active GCP Project (Location: US)
 # =============================================================================
 
 set -euo pipefail
 
 PROJECT_ID="${1:-$(gcloud config get-value project 2>/dev/null || echo "")}"
-LOCATION="EU"
+LOCATION="US"
 
 if [[ -z "${PROJECT_ID}" ]]; then
   echo "❌ Error: No active GCP project found. Run 'gcloud config set project <PROJECT_ID>' or pass it as argument 1."
@@ -101,14 +101,14 @@ echo "▶ [Test 6/11] Validating Lab I Enhancement: Managed AI.SCORE & AI.SIMILA
 TOP_SCORE=$(bq query --project_id="${PROJECT_ID}" --location="${LOCATION}" --use_legacy_sql=false --format=csv --quiet "
 SELECT ROUND(AI.SCORE(
   ('Rate chargeback threat severity from 1 to 5: ', return_reason_text, ' | ', agent_notes),
-  connection_id => 'eu.vertex_ai_conn'
+  connection_id => 'us.vertex_ai_conn'
 ), 1) AS score
 FROM \`retail_fraud.returns\` WHERE return_id IN (5920001, 5000001) ORDER BY score DESC LIMIT 1;" | tail -n 1)
 TOP_SIM=$(bq query --project_id="${PROJECT_ID}" --location="${LOCATION}" --use_legacy_sql=false --format=csv --quiet "
 SELECT ROUND(AI.SIMILARITY(
   content1 => return_reason_text,
   content2 => 'Package never arrived despite carrier tracking showing delivered. Demanding immediate refund.',
-  connection_id => 'eu.vertex_ai_conn', endpoint => 'text-embedding-005'
+  connection_id => 'us.vertex_ai_conn', endpoint => 'text-embedding-005'
 ), 3) AS sim
 FROM \`retail_fraud.returns\` WHERE return_id = 5920011;" | tail -n 1)
 echo "  ✅ AI.SCORE (top escalation score=${TOP_SCORE}) & AI.SIMILARITY (cosine similarity=${TOP_SIM}) succeeded."
@@ -151,7 +151,7 @@ reviews AS (
   SELECT review_id, review_text FROM \`mfg_quality_demo.product_reviews\` WHERE review_id IN ('R-0005', 'R-0041')
 )
 SELECT COUNT(*) FROM bulletins b JOIN reviews r
-  ON AI.IF(('Does this review match the bulletin symptom? Review: ', r.review_text, ' Bulletin: ', b.symptom), connection_id => 'eu.vertex_ai_conn');" | tail -n 1)
+  ON AI.IF(('Does this review match the bulletin symptom? Review: ', r.review_text, ' Bulletin: ', b.symptom), connection_id => 'us.vertex_ai_conn');" | tail -n 1)
 if [[ "${SEMANTIC_MATCHES}" -ge 1 ]]; then
   echo "  ✅ Semantic JOIN ON AI.IF matched ${SEMANTIC_MATCHES} engineering bulletin(s) to unstructured customer reviews."
 else

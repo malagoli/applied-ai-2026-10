@@ -99,7 +99,7 @@ flowchart TB
   ```sql
   AI.GENERATE(
     prompt => CONCAT('Analyze this customer review... Review: ', r.review_text),
-    connection_id => 'eu.vertex_ai_conn',
+    connection_id => 'us.vertex_ai_conn',
     endpoint => 'gemini-3.8-flash',
     output_schema => 'sentiment STRING, is_defect_report BOOL, defect_category STRING, affected_component STRING, severity INT64, summary STRING'
   ) AS g

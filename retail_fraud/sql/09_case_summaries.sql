@@ -27,7 +27,7 @@ SELECT
       '; refund exposure (EUR): ', CAST(sr.refund_exposure AS STRING),
       '; sample return reasons: ', s.sample_reasons,
       '; sample agent notes: ', s.sample_notes),
-    connection_id => 'eu.vertex_ai_conn',
+    connection_id => 'us.vertex_ai_conn',
     endpoint => 'gemini-3.8-flash').result AS case_summary
 FROM `retail_fraud.suspicious_rings` sr
 JOIN samples s USING (ring_id);

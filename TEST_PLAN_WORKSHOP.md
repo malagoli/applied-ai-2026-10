@@ -2,8 +2,8 @@
 
 **Progetto GCP Target:** `<PROJECT_ID>` (Project Number: `<PROJECT_NUMBER>`)  
 **Ambiente Esecuzione:** Google Cloud Shell / Qwiklabs  
-**Location (Multi-Region):** `EU` (`europe`)  
-**Connection Vertex AI:** `eu.vertex_ai_conn` (`CLOUD_RESOURCE`)
+**Location (Multi-Region):** `US` (`europe`)  
+**Connection Vertex AI:** `us.vertex_ai_conn` (`CLOUD_RESOURCE`)
 
 ---
 
@@ -24,7 +24,7 @@ Tutti i test seguenti sono stati eseguiti e verificati end-to-end su un progetto
 
 | ID Test | Modulo | Componente / Funzione BigQuery | Criterio di Successo (Expected Output) | Latenza Rilevata | Stato |
 |---|---|---|---|---|---|
-| **T-00** | Infra | `bq show --connection eu.vertex_ai_conn` | Connection `CLOUD_RESOURCE` attiva in `EU` con SA `bqcx-<PROJECT_NUMBER>-...@...` | < 1s | ✅ PASS |
+| **T-00** | Infra | `bq show --connection us.vertex_ai_conn` | Connection `CLOUD_RESOURCE` attiva in `US` con SA `bqcx-<PROJECT_NUMBER>-...@...` | < 1s | ✅ PASS |
 | **T-01** | Lab I | Verifica Dataset & Tabelle (`retail_fraud`) | 19 tabelle/viste presenti (`orders`: 50k, `returns`: 4.417, `suspicious_rings`: 3) | < 1s | ✅ PASS |
 | **T-02** | Lab I | Property Graph (`GRAPH_TABLE` su `fraud_graph`) | Query GQL restituisce esattamente i 3 ring (`RING-1`, `RING-2`, `RING-3`) con 0 falsi positivi | 1.8s | ✅ PASS |
 | **T-03** | Lab I | **TimesFM 3.0 Anomaly Detection** (`AI.DETECT_ANOMALIES`) | Rileva zero-shot il picco del `2025-11-16` (€17.205,16 vs max €14.432, **prob = 0.973**) | 3.1s | ✅ PASS |
@@ -44,10 +44,10 @@ Tutti i test seguenti sono stati eseguiti e verificati end-to-end su un progetto
 Dall'analisi tecnica e dai benchmark end-to-end emergono **4 pilastri operativi fondamentali**:
 
 ### A. Bootstrap Automatico per Ambienti Qwiklabs Vuoti
-* **Stato Attuale:** Tutti gli script SQL sono 100% project-agnostic (`location = 'EU'` nei `CREATE SCHEMA` e connection `eu.vertex_ai_conn`).
+* **Stato Attuale:** Tutti gli script SQL sono 100% project-agnostic (`location = 'US'` nei `CREATE SCHEMA` e connection `us.vertex_ai_conn`).
 * **Setup Qwiklabs da Zero:** Ogni partecipante dispone di un ambiente Qwiklabs / GCP vuoto dedicato. Eseguendo `./init_hackathon_student.sh` all'inizio del lab:
   1. Vengono abilitate automaticamente le API `bigquery.googleapis.com`, `bigqueryconnection.googleapis.com` e `aiplatform.googleapis.com`.
-  2. Viene creata la Cloud Resource Connection `eu.vertex_ai_conn` e vengono assegnati i permessi IAM (`roles/aiplatform.user`) al relativo Service Account.
+  2. Viene creata la Cloud Resource Connection `us.vertex_ai_conn` e vengono assegnati i permessi IAM (`roles/aiplatform.user`) al relativo Service Account.
   3. Vengono popolati i dataset e le tabelle seed di partenza per Lab I (`retail_fraud`) e Lab II (`mfg_quality_demo`).
 
 ### B. Integrazione TimesFM 3.0 in Entrambi i Laboratori (Univariato & Multivariato)
@@ -57,7 +57,7 @@ Dall'analisi tecnica e dai benchmark end-to-end emergono **4 pilastri operativi 
   * Aggregando la serie storica giornaliera continua su tutti i 46 giorni di calendario (1 Luglio – 15 Agosto 2025), **TimesFM 3.0** intercetta con `AI.DETECT_ANOMALIES` l'impennata di difetti dopo l'ingresso del lotto `HE-4471`, esegue il **forecast multivariato (`target_cols => ['defect_reports', 'severe_defects']`, `past_covariate_cols => ['total_reviews']`)** e certifica l'errore con `AI.EVALUATE` (`MAE = 0.72` recensioni/giorno), completando l'analisi multidimensionale di `AI.KEY_DRIVERS`.
 
 ### C. Allineamento Sintattico Server-less tra Lab I e Lab II
-* **Implementato in Lab I:** Nel file `sql/08_notes_extraction.sql`, Lab I utilizza il pattern moderno **Serverless** `AI.GENERATE(..., connection_id => 'eu.vertex_ai_conn', endpoint => 'gemini-3.8-flash', output_schema => '...')` con campionamento deterministico `_sampled_returns`.
+* **Implementato in Lab I:** Nel file `sql/08_notes_extraction.sql`, Lab I utilizza il pattern moderno **Serverless** `AI.GENERATE(..., connection_id => 'us.vertex_ai_conn', endpoint => 'gemini-3.8-flash', output_schema => '...')` con campionamento deterministico `_sampled_returns`.
 
 ### D. Integrazione Tema Keynote: "Agentic Data Cloud"
 * Poiché il Keynote delle 10:00 è intitolato **"Agentic Data Cloud"**, suggeriamo di chiudere entrambi i lab mostrando **BigQuery Data Canvas & Gemini Conversational Analytics**:
@@ -79,7 +79,7 @@ chmod +x init_hackathon_student.sh test_workshop.sh
 
 ## 🧹 5. Pulizia Completa delle Risorse (`cleanup_hackathon.sh`)
 
-Per rimuovere in un singolo comando tutti i dataset BigQuery (`retail_fraud`, `mfg_quality_demo`), i modelli BQML/Remoti, i Property Graph, la Cloud Resource Connection (`eu.vertex_ai_conn`) e il bucket Cloud Storage (`gs://<PROJECT_ID>-fraud-evidence`):
+Per rimuovere in un singolo comando tutti i dataset BigQuery (`retail_fraud`, `mfg_quality_demo`), i modelli BQML/Remoti, i Property Graph, la Cloud Resource Connection (`us.vertex_ai_conn`) e il bucket Cloud Storage (`gs://<PROJECT_ID>-fraud-evidence`):
 
 ```bash
 chmod +x cleanup_hackathon.sh

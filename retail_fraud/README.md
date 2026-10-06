@@ -2,8 +2,8 @@
 
 **Hackathon Slot:** 10:30 AM – 11:30 AM CEST (Hands-on Lab I)  
 **Verticale:** Retail & E-Commerce  
-**Dataset BigQuery:** `retail_fraud` (Location: **EU**)  
-**Connection Vertex AI:** `eu.vertex_ai_conn` (Modello: `gemini-3.8-flash` + `TimesFM 3.0`)
+**Dataset BigQuery:** `retail_fraud` (Location: **US**)  
+**Connection Vertex AI:** `us.vertex_ai_conn` (Modello: `gemini-3.8-flash` + `TimesFM 3.0`)
 
 ---
 
@@ -60,5 +60,5 @@ Per eseguire il walkthrough passo-passo in console o via CLI, segui **[WALKTHROU
 
 Per testare le nuove funzionalità **TimesFM 3.0** e **AI.AGG**:
 ```bash
-bq query --location=EU --use_legacy_sql=false < sql/13_timesfm_and_ai_agg_enhancements.sql
+bq query --location=US --use_legacy_sql=false < sql/13_timesfm_and_ai_agg_enhancements.sql
 ```

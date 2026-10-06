@@ -15,7 +15,7 @@
 set -euo pipefail
 
 ACTIVE_PROJECT=$(gcloud config get-value project 2>/dev/null || echo "")
-LOCATION="EU"
+LOCATION="US"
 CONN_ID="vertex_ai_conn"
 
 usage() {
@@ -28,7 +28,7 @@ Usage:
 Examples:
   $0
   $0 --full
-  $0 --project my-qwiklabs-project-id --conn eu.vertex_ai_conn
+  $0 --project my-qwiklabs-project-id --conn us.vertex_ai_conn
 EOF
   exit 1
 }
@@ -78,6 +78,15 @@ if [[ "${MODE}" == "--bootstrap" || "${MODE}" == "--full" ]]; then
   echo "   ⏳ Waiting 15s for IAM propagation..."
   sleep 15
 
+  # Ensure no legacy non-US datasets (e.g. from previous EU runs) block creation in US
+  for ds in retail_fraud mfg_quality_demo; do
+    DS_LOC=$(bq show --format=json "${ACTIVE_PROJECT}:${ds}" 2>/dev/null | python3 -c "import sys, json; print(json.load(sys.stdin).get('location', ''))" 2>/dev/null || echo "")
+    if [[ -n "${DS_LOC}" && "${DS_LOC}" != "${LOCATION}" ]]; then
+      echo "   ℹ️  Dataset '${ds}' found in '${DS_LOC}'; recreating in '${LOCATION}'..."
+      bq rm -r -f -d "${ACTIVE_PROJECT}:${ds}" >/dev/null 2>&1 || true
+    fi
+  done
+
   echo "▶ [4/5] Creating Lab I (retail_fraud) schema, seed tables, property graph & suspicious_rings..."
   bq query --project_id="${ACTIVE_PROJECT}" --location="${LOCATION}" --use_legacy_sql=false --quiet < retail_fraud/sql/01_customers_products.sql
   bq query --project_id="${ACTIVE_PROJECT}" --location="${LOCATION}" --use_legacy_sql=false --quiet < retail_fraud/sql/02_orders_returns_loyalty.sql
@@ -120,7 +129,7 @@ if [[ "${MODE}" == "--bootstrap" || "${MODE}" == "--full" ]]; then
 elif [[ "${MODE}" == "--project" ]]; then
   if [[ $# -lt 2 ]]; then usage; fi
   TARGET_PROJECT="$2"
-  TARGET_CONN="${4:-eu.vertex_ai_conn}"
+  TARGET_CONN="${4:-us.vertex_ai_conn}"
 
   echo "============================================================================="
   echo "🔧 Configuring active project & connection"
@@ -131,7 +140,7 @@ elif [[ "${MODE}" == "--project" ]]; then
   gcloud config set project "${TARGET_PROJECT}"
 
   find retail_fraud/sql product_analytics/sql -name "*.sql" -exec sed -i \
-    -e "s/[0-9a-zA-Z_-]*\.*eu\.vertex_ai_conn/${TARGET_CONN}/g" {} +
+    -e "s/[0-9a-zA-Z_-]*\.*\(eu\|us\)\.vertex_ai_conn/${TARGET_CONN}/g" {} +
 
   echo "  ✅ Active project set to ${TARGET_PROJECT} and SQL connection IDs set to ${TARGET_CONN}."
 else

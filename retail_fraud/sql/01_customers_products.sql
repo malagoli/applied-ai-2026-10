@@ -5,7 +5,7 @@
 
 CREATE SCHEMA IF NOT EXISTS `retail_fraud`
   OPTIONS (
-    location = 'EU',
+    location = 'US',
     description = 'Demo: Retail return-fraud ring detection with BigQuery Property Graph and Generative AI'
   );
 

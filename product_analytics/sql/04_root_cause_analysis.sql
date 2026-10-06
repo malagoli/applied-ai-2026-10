@@ -2,7 +2,7 @@
 -- Step 4: root-cause analysis — trace AI-extracted defects back to
 --         component lots and factory machines
 --
--- Run with:  bq query --use_legacy_sql=false --location=EU < sql/04_root_cause_analysis.sql
+-- Run with:  bq query --use_legacy_sql=false --location=US < sql/04_root_cause_analysis.sql
 -- =============================================================================
 
 -- ---------------------------------------------------------------------------

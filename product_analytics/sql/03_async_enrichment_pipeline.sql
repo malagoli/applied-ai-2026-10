@@ -26,7 +26,7 @@
 -- scheduled query (see DEMO_WALKTHROUGH.md) so new reviews landing in
 -- product_reviews get analyzed continuously without any application code.
 --
--- Run with:  bq query --use_legacy_sql=false --location=EU < sql/03_async_enrichment_pipeline.sql
+-- Run with:  bq query --use_legacy_sql=false --location=US < sql/03_async_enrichment_pipeline.sql
 -- =============================================================================
 
 CREATE TABLE IF NOT EXISTS `mfg_quality_demo.review_insights` (
@@ -85,7 +85,7 @@ BEGIN
             '- severity: 1 (cosmetic) to 5 (safety hazard or total failure); use 1 when there is no defect.\n',
             '- summary: one factual sentence a quality engineer can act on.\n\n',
             'Review: """', r.review_text, '"""'),
-          connection_id => 'eu.vertex_ai_conn',
+          connection_id => 'us.vertex_ai_conn',
           endpoint      => 'gemini-3.8-flash',
           output_schema => 'sentiment STRING, is_defect_report BOOL, defect_category STRING, affected_component STRING, severity INT64, summary STRING'
         ) AS g

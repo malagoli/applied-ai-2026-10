@@ -132,6 +132,6 @@ FROM ML.CORRELATION(
 ## 🚀 Come Eseguire il Bonus Pack
 Lo script è pronto e autosufficiente nel repository:
 ```bash
-bq query --location=EU --use_legacy_sql=false < retail_fraud/sql/14_augmented_analytics_bonus_pack.sql
+bq query --location=US --use_legacy_sql=false < retail_fraud/sql/14_augmented_analytics_bonus_pack.sql
 ```
 Tempo di esecuzione totale: **~8 secondi**.

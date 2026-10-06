@@ -4,7 +4,7 @@
 -- Feeds the aggregated root-cause evidence back into Gemini to produce a
 -- briefing for the quality team — structured data in, narrative out.
 --
--- Run with:  bq query --use_legacy_sql=false --location=EU < sql/05_executive_summary.sql
+-- Run with:  bq query --use_legacy_sql=false --location=US < sql/05_executive_summary.sql
 -- =============================================================================
 
 WITH evidence AS (
@@ -36,7 +36,7 @@ SELECT
       '3) notes any relevant maintenance context, 4) recommends three concrete next actions.\n\n',
       'DEFECT EVIDENCE:\n', e.evidence_text,
       '\n\nMACHINE RECORDS:\n', m.machines_text),
-    connection_id => 'eu.vertex_ai_conn',
+    connection_id => 'us.vertex_ai_conn',
     endpoint      => 'gemini-3.8-flash'
   ).result AS executive_briefing
 FROM evidence e, machine_context m;

@@ -129,7 +129,7 @@ flowchart TB
 ## Slide 5: Lab I — Estrazione Strutturata & Ottimizzazione Latenza/Quota (`06` → `10`)
 
 ### Step 06–08: Estrazione Strutturata dai Testi con `AI.GENERATE` (`06_remote_model.sql`, `07_async_scoring_batch.sql`, `08_notes_extraction.sql`)
-* **Modello:** `gemini-3.8-flash` via Cloud Resource Connection (`eu.vertex_ai_conn`).
+* **Modello:** `gemini-3.8-flash` via Cloud Resource Connection (`us.vertex_ai_conn`).
 * **Esempio di Codice (`08_notes_extraction.sql`):**
   ```sql
   CREATE TEMP TABLE _sampled_returns AS
@@ -144,7 +144,7 @@ flowchart TB
     return_id, customer_id,
     AI.GENERATE(
       CONCAT('Analyze this return note and extract fraud indicators: ', customer_note),
-      connection_id => 'eu.vertex_ai_conn',
+      connection_id => 'us.vertex_ai_conn',
       endpoint => 'gemini-3.8-flash',
       output_schema => 'claim_category STRING, suspected_abuse_type STRING, confidence FLOAT64, key_evidence STRING'
     ).*
@@ -286,7 +286,7 @@ flowchart TB
 
 ## Slide 10: Tabella Analitica dei Tempi di Esecuzione (Macchina vs Studente Umano)
 
-Tutti i tempi macchina sono stati **cronometrati empiricamente dal vivo** eseguendo l'intera pipeline end-to-end da zero sull'ambiente Google Cloud (`Location: EU`).
+Tutti i tempi macchina sono stati **cronometrati empiricamente dal vivo** eseguendo l'intera pipeline end-to-end da zero sull'ambiente Google Cloud (`Location: US`).
 
 ### Lab I: Retail Return-Fraud (`retail_fraud`)
 | File SQL / Step | Tecnologia / Modello | Tempo Macchina (s) | Tempo Studente Umano (min) | Note Didattiche & Bottleneck |
@@ -296,7 +296,7 @@ Tutti i tempi macchina sono stati **cronometrati empiricamente dal vivo** esegue
 | `03_property_graph.sql` | `CREATE PROPERTY GRAPH` | **4s** | **3 min** | Spiegazione sintassi Nodi/Archi ISO GQL |
 | `04_ring_detection.sql` | GQL / Auto-Fallback Ring Discovery | **2s** | **5 min** | Scoperta automatica `RING-1`, `RING-2`, `RING-3` |
 | `05_graph_exploration_queries.sql` | Multi-Hop Graph Traversal & Loyalty | **4s** | **4 min** | Tracciamento punti riciclati verso account terzi |
-| `06_remote_model.sql` | `CREATE MODEL ... gemini-3.8-flash` | **5s** | **2 min** | Binding zero-key tramite `eu.vertex_ai_conn` |
+| `06_remote_model.sql` | `CREATE MODEL ... gemini-3.8-flash` | **5s** | **2 min** | Binding zero-key tramite `us.vertex_ai_conn` |
 | `07_async_scoring_batch.sql` | `AI.GENERATE_BOOL` / `DOUBLE` | **19s** | **4 min** | Zero-shot scoring delle motivazioni di reso |
 | `08_notes_extraction.sql` | `AI.GENERATE` + Temp Table Sampling | **5s** *(era 288s)* | **5 min** | **Ottimizzato (-98% latenza)** grazie a `_sampled_returns` |
 | `09_case_summaries.sql` | `AI.GENERATE` Executive Dossier | **2s** | **3 min** | Generazione report investigativo per singolo Ring |

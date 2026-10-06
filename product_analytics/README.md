@@ -2,8 +2,8 @@
 
 **Hackathon Slot:** 11:30 AM – 12:30 PM CEST (Hands-on Lab II)  
 **Verticale:** Manufacturing & Consumer Appliances  
-**Dataset BigQuery:** `mfg_quality_demo` (Location: **EU**)  
-**Connection Vertex AI:** `eu.vertex_ai_conn` (Modello: `gemini-3.8-flash` + `TimesFM 3.0`)
+**Dataset BigQuery:** `mfg_quality_demo` (Location: **US**)  
+**Connection Vertex AI:** `us.vertex_ai_conn` (Modello: `gemini-3.8-flash` + `TimesFM 3.0`)
 
 ---
 
@@ -39,7 +39,7 @@ Tutti gli script sono idempotenti e progettati per essere eseguiti in sequenza i
 
 | Script | Fase | Funzionalità Principale |
 |---|---|---|
-| [`01_setup_dataset_and_data.sql`](sql/01_setup_dataset_and_data.sql) | Setup Dati | Crea lo schema `mfg_quality_demo` (`EU`), le tabelle ERP/BOM (`products`, `machines`, `component_lots`, `production_batches`, `batch_components`) e 60 recensioni in `product_reviews`. |
+| [`01_setup_dataset_and_data.sql`](sql/01_setup_dataset_and_data.sql) | Setup Dati | Crea lo schema `mfg_quality_demo` (`US`), le tabelle ERP/BOM (`products`, `machines`, `component_lots`, `production_batches`, `batch_components`) e 60 recensioni in `product_reviews`. |
 | [`02_quick_triage.sql`](sql/02_quick_triage.sql) | Cost-Optimized Triage & Ranking | Triage ad-hoc con `AI.IF` e `AI.CLASSIFY` (`optimization_mode => 'MINIMIZE_COST'`) + `AI.GENERATE_INT` + Ranking semantico `ORDER BY AI.SCORE(...)`. |
 | [`03_async_enrichment_pipeline.sql`](sql/03_async_enrichment_pipeline.sql) | Pipeline Async | Crea la tabella `review_insights` e la stored procedure `enrich_new_reviews()` con retry loop `REPEAT ... UNTIL`. |
 | [`04_root_cause_analysis.sql`](sql/04_root_cause_analysis.sql) | Root-Cause BOM | Crea la vista `v_component_lot_defect_rates` e isola il lotto `HE-4471` (77% difetti) e la macchina `CAL-02`. |

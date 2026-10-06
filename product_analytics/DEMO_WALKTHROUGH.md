@@ -1,9 +1,9 @@
 # Walkthrough Passo-Passo (Lab II) — NovaHome Product Review Intelligence
 
-**Ambiente Target:** Progetto Qwiklabs / GCP vuoto (Location: **EU**)  
+**Ambiente Target:** Progetto Qwiklabs / GCP vuoto (Location: **US**)  
 **Verticale:** Manufacturing (Piccoli Elettrodomestici)  
 **Dataset BigQuery:** `mfg_quality_demo`  
-**Connection Vertex AI:** `eu.vertex_ai_conn` (`gemini-3.8-flash`)
+**Connection Vertex AI:** `us.vertex_ai_conn` (`gemini-3.8-flash`)
 
 ---
 
@@ -25,7 +25,7 @@ Il laboratorio affronta esplicitamente due requisiti fondamentali di produzione:
 ## 🏗️ Architettura & Modello Dati
 
 ```
- Feed Recensioni       ┌────────────────────────── BigQuery (EU) ──────────────────────────┐
+ Feed Recensioni       ┌────────────────────────── BigQuery (US) ──────────────────────────┐
  (Amazon, App,   ───▶  │ product_reviews (testo libero non strutturato)                    │
  Email Supporto)       │        │                                                          │
                        │        │  esecuzione asincrona / incrementale (ogni 6h)           │
@@ -79,15 +79,15 @@ gcloud services enable \
   bigqueryconnection.googleapis.com \
   aiplatform.googleapis.com
 
-# 2. Crea la Cloud Resource Connection per Vertex AI in EU (~5s)
+# 2. Crea la Cloud Resource Connection per Vertex AI in US (~5s)
 bq mk --connection \
-  --location=EU \
+  --location=US \
   --project_id="${PROJECT_ID}" \
   --connection_type=CLOUD_RESOURCE \
   vertex_ai_conn
 
 # 3. Assegna il ruolo Vertex AI User al Service Account della connessione (~15s)
-SA_EMAIL=$(bq show --format=json --connection "${PROJECT_ID}.EU.vertex_ai_conn" | python3 -c "import sys, json; print(json.load(sys.stdin)['cloudResource']['serviceAccountId'])")
+SA_EMAIL=$(bq show --format=json --connection "${PROJECT_ID}.US.vertex_ai_conn" | python3 -c "import sys, json; print(json.load(sys.stdin)['cloudResource']['serviceAccountId'])")
 gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
   --member="serviceAccount:${SA_EMAIL}" \
   --role="roles/aiplatform.user" \
@@ -108,7 +108,7 @@ cd product_analytics
 Tutti gli script si trovano in `sql/` e possono essere eseguiti sia via Cloud Shell con:
 
 ```bash
-bq query --use_legacy_sql=false --location=EU < sql/<nome_script>.sql
+bq query --use_legacy_sql=false --location=US < sql/<nome_script>.sql
 ```
 sia copiando le query SQL direttamente nell'editor della **Console Web di BigQuery**.
 
@@ -116,10 +116,10 @@ sia copiando le query SQL direttamente nell'editor della **Console Web di BigQue
 
 ### Step 1 — Creazione Dataset e Caricamento Dati ERP + Recensioni (`sql/01_setup_dataset_and_data.sql`)
 
-Se non hai già eseguito `./init_hackathon_student.sh`, crea lo schema `mfg_quality_demo` (in location `EU`) e carica le tabelle di fabbrica e le 60 recensioni:
+Se non hai già eseguito `./init_hackathon_student.sh`, crea lo schema `mfg_quality_demo` (in location `US`) e carica le tabelle di fabbrica e le 60 recensioni:
 
 ```bash
-bq query --use_legacy_sql=false --location=EU < sql/01_setup_dataset_and_data.sql
+bq query --use_legacy_sql=false --location=US < sql/01_setup_dataset_and_data.sql
 ```
 
 Verifica in BigQuery le prime recensioni grezze:
@@ -144,7 +144,7 @@ Una singola query SQL, senza alcun deployment di modelli, permette a Gemini di a
 Esegui lo script:
 
 ```bash
-bq query --use_legacy_sql=false --location=EU < sql/02_quick_triage.sql
+bq query --use_legacy_sql=false --location=US < sql/02_quick_triage.sql
 ```
 
 Oppure esegui direttamente in Console:
@@ -157,18 +157,18 @@ SELECT
   LEFT(r.review_text, 80) AS review_snippet,
   AI.IF(
     ('Does this product review describe a malfunction or physical defect of the product itself (not shipping, packaging, price or personal preference)? Review: ', r.review_text),
-    connection_id     => 'eu.vertex_ai_conn',
+    connection_id     => 'us.vertex_ai_conn',
     optimization_mode => 'MINIMIZE_COST'
   ) AS is_defect_report,
   AI.CLASSIFY(
     r.review_text,
     categories        => ['heating', 'motor', 'leak_seal', 'electronics', 'housing_cosmetic', 'none'],
-    connection_id     => 'eu.vertex_ai_conn',
+    connection_id     => 'us.vertex_ai_conn',
     optimization_mode => 'MINIMIZE_COST'
   ) AS defect_category,
   AI.GENERATE_INT(
     ('Rate the severity of the problem described in this review from 1 (cosmetic/no problem) to 5 (safety hazard or total failure). Review: ', r.review_text),
-    connection_id => 'eu.vertex_ai_conn',
+    connection_id => 'us.vertex_ai_conn',
     endpoint      => 'gemini-3.8-flash'
   ).result AS severity
 FROM `mfg_quality_demo.product_reviews` AS r
@@ -213,7 +213,7 @@ END REPEAT;
 Esegui lo script (che crea la tabella `review_insights`, crea la procedura `enrich_new_reviews()` e ne lancia il primo ciclo completo sulle 60 recensioni):
 
 ```bash
-bq query --use_legacy_sql=false --location=EU < sql/03_async_enrichment_pipeline.sql
+bq query --use_legacy_sql=false --location=US < sql/03_async_enrichment_pipeline.sql
 ```
 
 Verifica che tutte le 60 recensioni siano state arricchite senza errori residui:
@@ -234,7 +234,7 @@ Ora che il testo libero è strutturato in `review_insights`, usiamo SQL standard
 Esegui [`sql/04_root_cause_analysis.sql`](sql/04_root_cause_analysis.sql), che crea la vista `mfg_quality_demo.v_component_lot_defect_rates` ed esegue 3 query diagnostiche:
 
 ```bash
-bq query --use_legacy_sql=false --location=EU < sql/04_root_cause_analysis.sql
+bq query --use_legacy_sql=false --location=US < sql/04_root_cause_analysis.sql
 ```
 
 #### Risultati Chiave:
@@ -257,7 +257,7 @@ bq query --use_legacy_sql=false --location=EU < sql/04_root_cause_analysis.sql
 Lo script [`sql/07_key_drivers_and_ai_agg_enhancements.sql`](sql/07_key_drivers_and_ai_agg_enhancements.sql) mostra 7 pattern avanzati di Applied AI e Time-Series Foundation Models in BigQuery:
 
 ```bash
-bq query --use_legacy_sql=false --location=EU < sql/07_key_drivers_and_ai_agg_enhancements.sql
+bq query --use_legacy_sql=false --location=US < sql/07_key_drivers_and_ai_agg_enhancements.sql
 ```
 
 1. **7a. Scoperta Automatica dei Driver (`AI.KEY_DRIVERS`):** in ~0.5 secondi individua automaticamente il segmento `["component_type=heating_element", "supplier=ThermoCore"]` con un incremento relativo del **+1600%** dei difetti su `CAL-02`.
@@ -270,7 +270,7 @@ bq query --use_legacy_sql=false --location=EU < sql/07_key_drivers_and_ai_agg_en
      ON AI.IF(
        ('Does this customer review describe the exact technical failure symptom in the engineering bulletin? Review: ',
         r.review_text, ' | Engineering Bulletin: ', b.bulletin_symptom),
-       connection_id => 'eu.vertex_ai_conn'
+       connection_id => 'us.vertex_ai_conn'
      );
    ```
 4. **7d. Ricerca per Similarità Semantica (`AI.SIMILARITY`):** data una segnalazione critica, calcola la cosine similarity con `text-embedding-005` per trovare tutti i reclami gemelli nel catalogo anche quando usano parole completamente diverse.
@@ -285,7 +285,7 @@ bq query --use_legacy_sql=false --location=EU < sql/07_key_drivers_and_ai_agg_en
 Chiudiamo il cerchio passando i dati aggregati della vista `v_component_lot_defect_rates` e le date di manutenzione di `machines` a `AI.GENERATE` per redigere il memo esecutivo per l'Head of Quality:
 
 ```bash
-bq query --use_legacy_sql=false --location=EU < sql/05_executive_summary.sql
+bq query --use_legacy_sql=false --location=US < sql/05_executive_summary.sql
 ```
 
 **Risultato atteso:** Gemini produce un briefing di max 250 parole che nomina esplicitamente il lotto **`HE-4471`**, il fornitore **`ThermoCore`** e la stazione **`CAL-02`** (citando la manutenzione ferma al `2025-01-17` e il 77% di difettosità) e raccomanda tre azioni immediate: quarantena dei lotti processati su `CAL-02`, ricalibrazione immediata della stazione e verifica congiunta sul lotto di guarnizioni `GSK-770`.
@@ -297,13 +297,13 @@ bq query --use_legacy_sql=false --location=EU < sql/05_executive_summary.sql
 Verifichiamo infine il comportamento incrementale della pipeline asincrona inserendo **3 nuove recensioni** (`R-0061`, `R-0062`, `R-0063`):
 
 ```bash
-bq query --use_legacy_sql=false --location=EU < sql/06_simulate_new_reviews.sql
+bq query --use_legacy_sql=false --location=US < sql/06_simulate_new_reviews.sql
 ```
 
 Lo script mostra che le 3 nuove recensioni sono presenti in `product_reviews` ma non ancora in `review_insights` (sono in backlog). Ora invoca la stored procedure:
 
 ```bash
-bq query --use_legacy_sql=false --location=EU "CALL \`mfg_quality_demo.enrich_new_reviews\`();"
+bq query --use_legacy_sql=false --location=US "CALL \`mfg_quality_demo.enrich_new_reviews\`();"
 ```
 
 **Cosa succede:** grazie all'anti-join incrementale (`WHERE i.review_id IS NULL`), BigQuery invia a Gemini **esclusivamente le 3 nuove recensioni** (le 60 precedenti non vengono toccate né ri-fatturate!). Rilanciando la query sulla vista `v_component_lot_defect_rates`, i conteggi del lotto `HE-4471` e `GSK-770` si aggiornano istantaneamente:
