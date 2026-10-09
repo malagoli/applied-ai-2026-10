@@ -38,6 +38,7 @@ fi
 
 LOCATION="US"
 CONN_ID="vertex_ai_conn"
+RESERVATION_ID="${RESERVATION_ID:-my-reservation}"
 EVIDENCE_BUCKET="gs://${PROJECT_ID}-fraud-evidence"
 
 echo "================================================================================"
@@ -49,7 +50,8 @@ echo "The following resources will be permanently deleted if present:"
 echo "  1. BigQuery Dataset : ${PROJECT_ID}:retail_fraud (tables, BQML models, graphs)"
 echo "  2. BigQuery Dataset : ${PROJECT_ID}:mfg_quality_demo (tables, embeddings, models)"
 echo "  3. BQ Connection    : ${PROJECT_ID}.${LOCATION}.${CONN_ID}"
-echo "  4. GCS Bucket       : ${EVIDENCE_BUCKET}"
+echo "  4. BQ Reservation   : ${PROJECT_ID}:${LOCATION}.${RESERVATION_ID} (+ assignments)"
+echo "  5. GCS Bucket       : ${EVIDENCE_BUCKET}"
 echo "================================================================================"
 
 if [[ "${AUTO_APPROVE}" != "true" && -t 0 ]]; then
@@ -65,7 +67,7 @@ if [[ "${AUTO_APPROVE}" != "true" && -t 0 ]]; then
 fi
 
 echo ""
-echo "🗑️  [1/4] Removing BigQuery dataset 'retail_fraud'..."
+echo "🗑️  [1/5] Removing BigQuery dataset 'retail_fraud'..."
 if bq show --project_id="${PROJECT_ID}" "retail_fraud" >/dev/null 2>&1; then
   bq rm -r -f -d "${PROJECT_ID}:retail_fraud"
   echo "   ✅ Deleted dataset '${PROJECT_ID}:retail_fraud'."
@@ -74,7 +76,7 @@ else
 fi
 
 echo ""
-echo "🗑️  [2/4] Removing BigQuery dataset 'mfg_quality_demo'..."
+echo "🗑️  [2/5] Removing BigQuery dataset 'mfg_quality_demo'..."
 if bq show --project_id="${PROJECT_ID}" "mfg_quality_demo" >/dev/null 2>&1; then
   bq rm -r -f -d "${PROJECT_ID}:mfg_quality_demo"
   echo "   ✅ Deleted dataset '${PROJECT_ID}:mfg_quality_demo'."
@@ -83,7 +85,7 @@ else
 fi
 
 echo ""
-echo "🗑️  [3/4] Removing BigQuery Cloud Resource Connection '${CONN_ID}'..."
+echo "🗑️  [3/5] Removing BigQuery Cloud Resource Connection '${CONN_ID}'..."
 if bq show --connection --location="${LOCATION}" --project_id="${PROJECT_ID}" "${CONN_ID}" >/dev/null 2>&1; then
   bq rm --connection --force --location="${LOCATION}" --project_id="${PROJECT_ID}" "${CONN_ID}"
   echo "   ✅ Deleted connection '${LOCATION}.${CONN_ID}'."
@@ -92,7 +94,20 @@ else
 fi
 
 echo ""
-echo "🗑️  [4/4] Removing Cloud Storage bucket '${EVIDENCE_BUCKET}'..."
+echo "🗑️  [4/5] Removing BigQuery Reservation '${RESERVATION_ID}' and assignments..."
+if bq show --project_id="${PROJECT_ID}" --location="${LOCATION}" --reservation "${RESERVATION_ID}" >/dev/null 2>&1; then
+  ASSIGNMENTS=$(bq ls --format=json --project_id="${PROJECT_ID}" --location="${LOCATION}" --reservation_assignment "${PROJECT_ID}:${LOCATION}.${RESERVATION_ID}" 2>/dev/null | python3 -c "import sys, json; data=json.load(sys.stdin); print(' '.join(a['name'].split('.')[-1] for a in data if 'name' in a))" 2>/dev/null || echo "")
+  for aid in ${ASSIGNMENTS}; do
+    bq rm --project_id="${PROJECT_ID}" --location="${LOCATION}" --reservation_assignment "${RESERVATION_ID}.${aid}" >/dev/null 2>&1 || true
+  done
+  bq rm --project_id="${PROJECT_ID}" --location="${LOCATION}" --reservation "${RESERVATION_ID}" >/dev/null 2>&1 || true
+  echo "   ✅ Deleted reservation '${PROJECT_ID}:${LOCATION}.${RESERVATION_ID}' and its assignments."
+else
+  echo "   ℹ️  Reservation '${PROJECT_ID}:${LOCATION}.${RESERVATION_ID}' not found (already deleted)."
+fi
+
+echo ""
+echo "🗑️  [5/5] Removing Cloud Storage bucket '${EVIDENCE_BUCKET}'..."
 if gcloud storage buckets describe "${EVIDENCE_BUCKET}" --project="${PROJECT_ID}" >/dev/null 2>&1; then
   gcloud storage rm -r "${EVIDENCE_BUCKET}" --project="${PROJECT_ID}"
   echo "   ✅ Deleted bucket '${EVIDENCE_BUCKET}'."

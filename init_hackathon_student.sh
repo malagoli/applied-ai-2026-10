@@ -14,14 +14,20 @@
 
 set -euo pipefail
 
-ACTIVE_PROJECT=$(gcloud config get-value project 2>/dev/null || echo "")
-LOCATION="US"
-CONN_ID="vertex_ai_conn"
+ACTIVE_PROJECT="$(gcloud config get-value project 2>/dev/null || true)"
+if [[ -z "${ACTIVE_PROJECT}" || "${ACTIVE_PROJECT}" == "(unset)" ]]; then
+  ACTIVE_PROJECT="$(gcloud projects list --format='value(projectId)' --limit=1 2>/dev/null || true)"
+fi
+LOCATION="${LOCATION:-US}"
+CONN_ID="${CONN_ID:-vertex_ai_conn}"
+RESERVATION_ID="${RESERVATION_ID:-my-reservation}"
+MAX_SLOTS="${MAX_SLOTS:-50}"
+EDITION="ENTERPRISE"
 
 usage() {
   cat <<EOF
 Usage:
-  $0 [--bootstrap]                              # Default: Bootstrap empty Qwiklabs/GCP project (APIs, Connection, IAM, Seed Data)
+  $0 [--bootstrap]                              # Default: Bootstrap empty Qwiklabs/GCP project (APIs, Reservation, Connection, IAM, Seed Data)
   $0 --full                                     # Bootstrap + execute all Lab I & Lab II pipeline scripts (for automated validation)
   $0 --project <project_id> [--conn <conn_id>]  # Parameterize SQL files for a specific project/connection
 
@@ -37,25 +43,50 @@ MODE="${1:---bootstrap}"
 
 if [[ "${MODE}" == "--bootstrap" || "${MODE}" == "--full" ]]; then
   if [[ -z "${ACTIVE_PROJECT}" || "${ACTIVE_PROJECT}" == "(unset)" ]]; then
-    echo "❌ Error: No active GCP project found. Run 'gcloud config set project <PROJECT_ID>'."
+    echo "❌ ERRORE: project ID non trovato. Esegui 'gcloud config set project <PROJECT_ID>'." >&2
     exit 1
   fi
 
   echo "============================================================================="
   echo "🚀 Bootstrapping Empty Qwiklabs / GCP Project from Scratch (${MODE})"
   echo "   Target Project : ${ACTIVE_PROJECT} (${LOCATION})"
+  echo "   BQ Reservation : ${ACTIVE_PROJECT}:${LOCATION}.${RESERVATION_ID} (${EDITION}, 0 baseline, ${MAX_SLOTS} max slots)"
   echo "   Connection ID  : ${LOCATION}.${CONN_ID}"
   echo "============================================================================="
 
-  echo "▶ [1/5] Enabling required Google Cloud APIs (BigQuery, Connection, Vertex AI)..."
+  echo "▶ [1/6] Enabling required Google Cloud APIs (BigQuery, Reservation, Connection, Vertex AI)..."
   gcloud services enable \
     bigquery.googleapis.com \
+    bigqueryreservation.googleapis.com \
     bigqueryconnection.googleapis.com \
     aiplatform.googleapis.com \
     --project="${ACTIVE_PROJECT}" --quiet
   echo "   ✅ APIs enabled."
 
-  echo "▶ [2/5] Ensuring Vertex AI Cloud Resource Connection '${CONN_ID}' exists in ${LOCATION}..."
+  echo "▶ [2/6] Configuring BigQuery ${EDITION} Reservation '${RESERVATION_ID}' (0 baseline slots, max ${MAX_SLOTS} autoscale slots for Property Graph)..."
+  if bq show --project_id="${ACTIVE_PROJECT}" --location="${LOCATION}" --reservation "${RESERVATION_ID}" >/dev/null 2>&1; then
+    echo "   ℹ️  Reservation '${RESERVATION_ID}' già esistente."
+  else
+    bq mk --project_id="${ACTIVE_PROJECT}" --location="${LOCATION}" --reservation \
+      --edition="${EDITION}" --slots=0 --autoscale_max_slots="${MAX_SLOTS}" "${RESERVATION_ID}"
+    echo "   ✅ Reservation '${RESERVATION_ID}' creata (edition=${EDITION}, slots=0, autoscale_max_slots=${MAX_SLOTS})."
+  fi
+
+  if bq show --project_id="${ACTIVE_PROJECT}" --location="${LOCATION}" --reservation_assignment \
+       --job_type=QUERY --assignee_type=PROJECT --assignee_id="${ACTIVE_PROJECT}" >/dev/null 2>&1; then
+    echo "   ℹ️  Reservation assignment (QUERY) per il progetto '${ACTIVE_PROJECT}' già esistente."
+  else
+    bq mk --project_id="${ACTIVE_PROJECT}" --location="${LOCATION}" --reservation_assignment \
+      --reservation_id="${ACTIVE_PROJECT}:${LOCATION}.${RESERVATION_ID}" \
+      --job_type=QUERY --assignee_type=PROJECT --assignee_id="${ACTIVE_PROJECT}"
+    echo "   ✅ Reservation '${ACTIVE_PROJECT}:${LOCATION}.${RESERVATION_ID}' assegnata al progetto '${ACTIVE_PROJECT}'."
+  fi
+
+  bq show --project_id="${ACTIVE_PROJECT}" --location="${LOCATION}" --reservation "${RESERVATION_ID}"
+  bq ls --project_id="${ACTIVE_PROJECT}" --location="${LOCATION}" --reservation_assignment \
+    "${ACTIVE_PROJECT}:${LOCATION}.${RESERVATION_ID}"
+
+  echo "▶ [3/6] Ensuring Vertex AI Cloud Resource Connection '${CONN_ID}' exists in ${LOCATION}..."
   if ! bq show --connection --project_id="${ACTIVE_PROJECT}" --location="${LOCATION}" "${CONN_ID}" >/dev/null 2>&1; then
     bq mk --connection --connection_type=CLOUD_RESOURCE --project_id="${ACTIVE_PROJECT}" --location="${LOCATION}" "${CONN_ID}"
     echo "   ✅ Created connection '${LOCATION}.${CONN_ID}'."
@@ -63,7 +94,7 @@ if [[ "${MODE}" == "--bootstrap" || "${MODE}" == "--full" ]]; then
     echo "   ℹ️  Connection '${LOCATION}.${CONN_ID}' already exists."
   fi
 
-  echo "▶ [3/5] Granting Vertex AI IAM permissions to Connection Service Account..."
+  echo "▶ [4/6] Granting Vertex AI IAM permissions to Connection Service Account..."
   SA_EMAIL=$(bq show --format=json --connection --project_id="${ACTIVE_PROJECT}" --location="${LOCATION}" "${CONN_ID}" | python3 -c "import sys, json; print(json.load(sys.stdin)['cloudResource']['serviceAccountId'])")
   echo "   Service Account: ${SA_EMAIL}"
   gcloud projects add-iam-policy-binding "${ACTIVE_PROJECT}" \
@@ -75,7 +106,7 @@ if [[ "${MODE}" == "--bootstrap" || "${MODE}" == "--full" ]]; then
     --role="roles/storage.objectViewer" \
     --condition=None --quiet >/dev/null
   echo "   ✅ Granted roles/aiplatform.user & roles/storage.objectViewer."
-  echo "   ⏳ Waiting 15s for IAM propagation..."
+  echo "   ⏳ Waiting 15s for IAM & Reservation propagation..."
   sleep 15
 
   # Ensure no legacy non-US datasets (e.g. from previous EU runs) block creation in US
@@ -87,14 +118,14 @@ if [[ "${MODE}" == "--bootstrap" || "${MODE}" == "--full" ]]; then
     fi
   done
 
-  echo "▶ [4/5] Creating Lab I (retail_fraud) schema, seed tables, property graph & suspicious_rings..."
+  echo "▶ [5/6] Creating Lab I (retail_fraud) schema, seed tables, property graph & suspicious_rings..."
   bq query --project_id="${ACTIVE_PROJECT}" --location="${LOCATION}" --use_legacy_sql=false --quiet < retail_fraud/sql/01_customers_products.sql
   bq query --project_id="${ACTIVE_PROJECT}" --location="${LOCATION}" --use_legacy_sql=false --quiet < retail_fraud/sql/02_orders_returns_loyalty.sql
   bq query --project_id="${ACTIVE_PROJECT}" --location="${LOCATION}" --use_legacy_sql=false --quiet < retail_fraud/sql/03_property_graph.sql
   bq query --project_id="${ACTIVE_PROJECT}" --location="${LOCATION}" --use_legacy_sql=false --quiet < retail_fraud/sql/04_ring_detection.sql
   echo "   ✅ Lab I base schema, seed data, property graph & suspicious_rings loaded."
 
-  echo "▶ [5/5] Creating Lab II (mfg_quality_demo) schema and seed tables..."
+  echo "▶ [6/6] Creating Lab II (mfg_quality_demo) schema and seed tables..."
   bq query --project_id="${ACTIVE_PROJECT}" --location="${LOCATION}" --use_legacy_sql=false --quiet < product_analytics/sql/01_setup_dataset_and_data.sql
   echo "   ✅ Lab II base schema & seed data loaded."
 
