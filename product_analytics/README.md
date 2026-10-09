@@ -25,13 +25,6 @@ Questo laboratorio dimostra come costruire una pipeline **Production-Grade AI in
 
 ---
 
-## 🏛️ Architettura & Slide Deck
-
-👉 Consulta il documento dedicato **[ARCHITECTURE_AND_SLIDES.md](ARCHITECTURE_AND_SLIDES.md)** per:
-* Diagramma architetturale End-to-End (Mermaid).
-* Set completo di **10 Slide** per la presentazione in aula durante l'Hackathon.
-
----
 
 ## 📂 Struttura degli Script SQL (`sql/`)
 
