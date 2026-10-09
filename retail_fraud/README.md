@@ -16,18 +16,10 @@ Gli e-commerce moderni subiscono perdite significative a causa di **frodi sui re
 
 Analizzando le transazioni singolarmente, ogni reso appare legittimo. Questo laboratorio dimostra come combinare **4 pilastri dell'Agentic Data Cloud in BigQuery** per smascherare i ring criminali:
 
-1. **TimesFM 3.0 (`AI.DETECT_ANOMALIES`, `AI.FORECAST` Multivariato & `AI.EVALUATE`)** per intercettare i picchi macroeconomici di rimborso, proiettare congiuntamente esposizione in € e volumi pacchi (`target_cols`) e validare il MAPE senza addestrare modelli ML.
-2. **BigQuery Property Graph (`CREATE PROPERTY GRAPH` & GQL)** per scoprire le reti occulte di account che condividono Device ID, Indirizzi di Spedizione o Metodi di Pagamento.
+1. **TimesFM 3.0 (`AI.DETECT_ANOMALIES`, `AI.FORECAST` Multivariato & `AI.EVALUATE`)** per intercettare i picchi di rimborsi, proiettare congiuntamente esposizione in € e volumi pacchi (`target_cols`) e validare il MAPE senza addestrare modelli ML.
+2. **BigQuery Property Graph (`CREATE PROPERTY GRAPH` & GQL)** per scoprire le connessioni occulte di account che condividono Device ID, Indirizzi di Spedizione o Metodi di Pagamento.
 3. **Generative AI in SQL (`AI.GENERATE_BOOL`, `AI.GENERATE_TABLE`, `AI.GENERATE`)** in modalità **asincrona (batch incrementale schedulato ogni 15 minuti)** per estrarre segnali strutturati dalle note testuali degli operatori di customer care.
 4. **Aggregazione Semantica (`AI.AGG`)** per generare automaticamente i dossier investigativi (*Case Briefs*) per ciascun ring.
-
----
-
-## 🏛️ Architettura & Slide Deck
-
-👉 Consulta il documento dedicato **[ARCHITECTURE_AND_SLIDES.md](ARCHITECTURE_AND_SLIDES.md)** per:
-* Diagramma architetturale End-to-End (Mermaid).
-* Set completo di **10 Slide** per la presentazione in aula durante l'Hackathon.
 
 ---
 
