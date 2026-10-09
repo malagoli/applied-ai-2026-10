@@ -49,8 +49,3 @@ Tutti gli script sono idempotenti e progettati per essere eseguiti in sequenza:
 ## ⚡ Quickstart & Esecuzione
 
 Per eseguire il walkthrough passo-passo in console o via CLI, segui **[WALKTHROUGH.md](WALKTHROUGH.md)**.
-
-Per testare le nuove funzionalità **TimesFM 3.0** e **AI.AGG**:
-```bash
-bq query --location=US --use_legacy_sql=false < sql/13_timesfm_and_ai_agg_enhancements.sql
-```
