@@ -142,7 +142,7 @@ ORDER BY week_start;
 ```
 
 **Risultato atteso:** TimesFM 3.0 intercetta immediatamente il picco della settimana **`2025-11-16`** (**€17.205** contro un massimo atteso di €14.811, probabilità di anomalia **`0.967`**), che coincide esattamente con l'entrata in azione del **Ring C** sull'elettronica.
-* **Forecasting Univariato & Multivariato (`13b` & `13b-bis` - `AI.FORECAST` con `TimesFM 3.0`):** proietta oltre **€100.000** di esposizione nelle 8 settimane successive e mostra la novità esclusiva di **TimesFM 3.0 (`target_cols => ['weekly_refund_eur', 'return_count']`)** per prevedere simultaneamente sia l'esposizione in € sia il volume di pacchi resi.
+* **Forecasting Univariato & Multivariato (`13b` & `13b-bis` - `AI.FORECAST` con `TimesFM 3.0`):** proietta oltre **€100.000** di esposizione nelle 8 settimane successive e mostra la novità di **TimesFM 3.0 (`target_cols => ['weekly_refund_eur', 'return_count']`)** per prevedere simultaneamente sia l'esposizione in € sia il volume di pacchi resi.
 * **Backtesting Zero-Shot (`13c` - `AI.EVALUATE` con `TimesFM 3.0`):** valida automaticamente l'accuratezza di TimesFM 3.0 confrontando lo storico pre-Giugno 2025 con i dati reali di Giugno–Agosto 2025 e restituendo **`MAPE = 14.49%`** (`sMAPE = 15.84%`, `MAE = €1.842,69`) in una singola query senza `CREATE MODEL`.
 
 ---
