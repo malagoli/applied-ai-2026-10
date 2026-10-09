@@ -9,7 +9,7 @@
 
 ## 🎯 Obiettivo del Laboratorio
 
-Gli e-commerce moderni subiscono perdite significative a causa di **frodi organizzate sui resi** (*Return Abuse Rings*):
+Gli e-commerce moderni subiscono perdite significative a causa di **frodi sui resi** (*Return Abuse Rings*):
 1. **Wardrobing (Ring A - Account `9001–9006`)**: acquisto di capi d'abbigliamento, utilizzo e restituzione sistematica (~68% return rate) con cartellini riattaccati.
 2. **Loyalty Points Cycling (Ring B - Account `9101–9104`)**: acquisto, riscatto immediato dei punti fedeltà in gift card/sconti entro 48 ore, e successivo reso della merce.
 3. **False "Item Not Received" / Empty Box Claims (Ring C - Account `9201–9205`)**: reclami seriali di mancata consegna su elettronica ad alto valore (€400+), pagati con lo stesso metodo di pagamento.
