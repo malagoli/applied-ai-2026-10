@@ -14,11 +14,11 @@
 Il team di **Quality Engineering** vuole scoprire — *senza leggere manualmente le recensioni* — se i reclami indicano un vero difetto di fabbricazione e, in caso affermativo, **quale lotto di componenti (`lot_id`) e quale macchinario di stabilimento (`machine_id`) sono responsabili**.
 
 ### La Soluzione in BigQuery
-Le funzioni di AI generativa di BigQuery ([`AI.GENERATE`](https://docs.cloud.google.com/bigquery/docs/reference/standard-sql/bigqueryml-syntax-ai-generate), [`AI.IF`](https://docs.cloud.google.com/bigquery/docs/reference/standard-sql/bigqueryml-syntax-ai-if), [`AI.CLASSIFY`](https://docs.cloud.google.com/bigquery/docs/reference/standard-sql/bigqueryml-syntax-ai-classify), [`AI.GENERATE_INT`](https://docs.cloud.google.com/bigquery/docs/reference/standard-sql/bigqueryml-syntax-ai-generate-int), [`AI.AGG`](https://docs.cloud.google.com/bigquery/docs/reference/standard-sql/bigqueryml-syntax-ai-agg)) trasformano il testo libero delle recensioni in segnali di qualità tipizzati e strutturati **direttamente dentro il data warehouse**, in modalità asincrona tramite una stored procedure schedulata. Successivamente, normali query SQL e la funzione **`AI.KEY_DRIVERS`** incrociano tali segnali con la **Distinta Base (Bill of Materials - BOM)** dello stabilimento per isolare i lotti e i macchinari colpevoli.
+Le funzioni di AI generativa di BigQuery ([`AI.GENERATE`](https://docs.cloud.google.com/bigquery/docs/reference/standard-sql/bigqueryml-syntax-ai-generate), [`AI.IF`](https://docs.cloud.google.com/bigquery/docs/reference/standard-sql/bigqueryml-syntax-ai-if), [`AI.CLASSIFY`](https://docs.cloud.google.com/bigquery/docs/reference/standard-sql/bigqueryml-syntax-ai-classify), [`AI.GENERATE_INT`](https://docs.cloud.google.com/bigquery/docs/reference/standard-sql/bigqueryml-syntax-ai-generate-int), [`AI.AGG`](https://docs.cloud.google.com/bigquery/docs/reference/standard-sql/bigqueryml-syntax-ai-agg)) trasformano il testo libero delle recensioni in segnali di qualità tipizzati e strutturati **direttamente in BigQuery**, in modalità asincrona tramite una stored procedure schedulata. Successivamente, normali query SQL e la funzione **`AI.KEY_DRIVERS`** incrociano tali segnali con la **Distinta Base (Bill of Materials - BOM)** dello stabilimento per isolare i lotti e i macchinari colpevoli.
 
 Il laboratorio affronta esplicitamente due requisiti fondamentali di produzione:
 1. **Ottimizzazione dei Costi ([Model Distillation](https://docs.cloud.google.com/bigquery/docs/optimize-ai-functions)):** utilizzo di `optimization_mode => 'MINIMIZE_COST'` per `AI.IF` e `AI.CLASSIFY` (Step 2).
-2. **Resilienza agli Errori di Quota ([Retry Pattern](https://docs.cloud.google.com/bigquery/docs/iterate-generate-text-calls)):** ciclo `REPEAT ... UNTIL` integrato nella stored procedure `enrich_new_reviews()` per riprovare solo le righe che incontrano errori temporanei di rate-limit senza ri-fatturare le righe già elaborate (Step 3).
+2. **Resilienza agli Errori di Quota ([Retry Pattern](https://docs.cloud.google.com/bigquery/docs/iterate-generate-text-calls)):** ciclo `REPEAT ... UNTIL` integrato nella stored procedure `enrich_new_reviews()` per analizzare solo le righe che incontrano errori temporanei di rate-limit senza ri-fatturare le righe già elaborate (Step 3).
 
 ---
 
@@ -31,7 +31,7 @@ Il laboratorio affronta esplicitamente due requisiti fondamentali di produzione:
                        │        │  esecuzione asincrona / incrementale (ogni 6h)           │
                        │        ▼                                                          │
                        │ CALL enrich_new_reviews()                                         │
-                       │   AI.GENERATE(output_schema => sentiment, defect_category, ...)   │──▶ Vertex AI
+                       │   AI.GENERATE(output_schema => sentiment, defect_category, ...)   │──▶ Gemini Platform
                        │   └─ retry loop: rielabora solo le righe con errore quota 429     │    Gemini 3.8 Flash
                        │        ▼                                                          │
                        │ review_insights (tabella strutturata tipizzata)                   │
@@ -273,7 +273,7 @@ bq query --use_legacy_sql=false --location=US < sql/07_key_drivers_and_ai_agg_en
        connection_id => 'us.vertex_ai_conn'
      );
    ```
-4. **7d. Ricerca per Similarità Semantica (`AI.SIMILARITY`):** data una segnalazione critica, calcola la cosine similarity con `text-embedding-005` per trovare tutti i reclami gemelli nel catalogo anche quando usano parole completamente diverse.
+4. **7d. Ricerca per Similarità Semantica (`AI.SIMILARITY`):** data una segnalazione critica, calcola la similarità con `text-embedding-005` per trovare tutti i reclami gemelli nel catalogo anche quando usano parole completamente diverse.
 5. **7e. Rilevamento Anomalie con `TimesFM 3.0` (`AI.DETECT_ANOMALIES`):** intercetta automaticamente in zero-shot (`model => 'TimesFM 3.0'`) i giorni di fine Luglio / inizio Agosto 2025 (`2025-07-27`, `2025-07-28`, `2025-08-01` con `prob = 1.000`, `2025-08-02` con `prob = 0.999`) in cui i reclami difettosi superano la banda predittiva in seguito alla distribuzione dei lotti `HE-4471`.
 6. **7f. Forecasting Multivariato con Covariate in `TimesFM 3.0` (`AI.FORECAST`):** utilizza i nuovi parametri esclusivi di **TimesFM 3.0** (`target_cols => ['defect_count', 'avg_severity']`, `past_covariate_cols => ['total_reviews']`) per prevedere simultaneamente il numero di difetti giornalieri e la gravità media per i successivi 5 giorni.
 7. **7g. Backtesting Zero-Shot con `TimesFM 3.0` (`AI.EVALUATE`):** certifica l'errore medio assoluto (`MAE = 1.17`, `RMSE = 1.49`) del modello `TimesFM 3.0` sulla serie storica dei difetti senza bisogno di `CREATE MODEL`.
@@ -306,7 +306,7 @@ Lo script mostra che le 3 nuove recensioni sono presenti in `product_reviews` ma
 bq query --use_legacy_sql=false --location=US "CALL \`mfg_quality_demo.enrich_new_reviews\`();"
 ```
 
-**Cosa succede:** grazie all'anti-join incrementale (`WHERE i.review_id IS NULL`), BigQuery invia a Gemini **esclusivamente le 3 nuove recensioni** (le 60 precedenti non vengono toccate né ri-fatturate!). Rilanciando la query sulla vista `v_component_lot_defect_rates`, i conteggi del lotto `HE-4471` e `GSK-770` si aggiornano istantaneamente:
+**Cosa succede:** grazie all'esclusione delle righe con recensioni (`WHERE i.review_id IS NULL`), BigQuery invia a Gemini **esclusivamente le 3 nuove recensioni** (le 60 precedenti non vengono toccate né ri-fatturate!). Rilanciando la query sulla vista `v_component_lot_defect_rates`, i conteggi del lotto `HE-4471` e `GSK-770` si aggiornano istantaneamente:
 
 ```sql
 SELECT lot_id, component_type, supplier, installed_by_machine_id,
