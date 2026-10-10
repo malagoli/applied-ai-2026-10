@@ -3,6 +3,7 @@
 -- have a BigQuery Enterprise Edition reservation for GRAPH_TABLE.
 
 BEGIN
+  SET @@reservation = CONCAT('projects/', @@project_id, '/locations/US/reservations/my-reservation');
   -- Q1: pairs of DISTINCT customer accounts using the SAME device
   SELECT * FROM GRAPH_TABLE(
     `retail_fraud.fraud_graph`
@@ -34,6 +35,8 @@ EXCEPTION WHEN ERROR THEN
   ORDER BY shared_device
   LIMIT 50;
 END;
+
+SET @@reservation = 'none';
 
 -- Q3: loyalty points cycling — points earned AND redeemed on an order that was then returned
 SELECT r.customer_id,

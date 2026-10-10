@@ -72,19 +72,7 @@ if [[ "${MODE}" == "--bootstrap" || "${MODE}" == "--full" ]]; then
     echo "   ✅ Reservation '${RESERVATION_ID}' creata (edition=${EDITION}, slots=0, autoscale_max_slots=${MAX_SLOTS})."
   fi
 
-  if bq show --project_id="${ACTIVE_PROJECT}" --location="${LOCATION}" --reservation_assignment \
-       --job_type=QUERY --assignee_type=PROJECT --assignee_id="${ACTIVE_PROJECT}" >/dev/null 2>&1; then
-    echo "   ℹ️  Reservation assignment (QUERY) per il progetto '${ACTIVE_PROJECT}' già esistente."
-  else
-    bq mk --project_id="${ACTIVE_PROJECT}" --location="${LOCATION}" --reservation_assignment \
-      --reservation_id="${ACTIVE_PROJECT}:${LOCATION}.${RESERVATION_ID}" \
-      --job_type=QUERY --assignee_type=PROJECT --assignee_id="${ACTIVE_PROJECT}"
-    echo "   ✅ Reservation '${ACTIVE_PROJECT}:${LOCATION}.${RESERVATION_ID}' assegnata al progetto '${ACTIVE_PROJECT}'."
-  fi
-
   bq show --project_id="${ACTIVE_PROJECT}" --location="${LOCATION}" --reservation "${RESERVATION_ID}"
-  bq ls --project_id="${ACTIVE_PROJECT}" --location="${LOCATION}" --reservation_assignment \
-    "${ACTIVE_PROJECT}:${LOCATION}.${RESERVATION_ID}"
 
   echo "▶ [3/6] Ensuring Vertex AI Cloud Resource Connection '${CONN_ID}' exists in ${LOCATION}..."
   if ! bq show --connection --project_id="${ACTIVE_PROJECT}" --location="${LOCATION}" "${CONN_ID}" >/dev/null 2>&1; then

@@ -6,6 +6,7 @@
 -- does not have a BigQuery Enterprise Edition reservation for GRAPH_TABLE.
 
 BEGIN
+  SET @@reservation = CONCAT('projects/', @@project_id, '/locations/US/reservations/my-reservation');
   CREATE OR REPLACE TABLE `retail_fraud.suspicious_rings` AS
   WITH cust_stats AS (
     SELECT o.customer_id,
